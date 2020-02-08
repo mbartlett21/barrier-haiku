@@ -5,7 +5,7 @@
 ## architecture of Haiku.
 
 # The name of the binary.
-NAME = synergy_client
+NAME = barrier_client
 
 # The type of binary, must be one of:
 #	APP:	Application
@@ -28,11 +28,11 @@ APP_MIME_SIG =
 #	means this Makefile will not work correctly if two source files with the
 #	same name (source.c or source.cpp) are included from different directories.
 #	Also note that spaces in folder names do not work well with this Makefile.
-SRCS = uSynergy.c Keymap.cpp haiku-usynergy.cpp
+SRCS = uBarrier.c Keymap.cpp haiku-ubarrier.cpp
 
 #	Specify the resource definition files to use. Full or relative paths can be
 #	used.
-RDEFS = SynergyHaiku.rdef
+RDEFS = BarrierHaiku.rdef
 
 #	Specify the resource files to use. Full or relative paths can be used.
 #	Both RDEFS and RSRCS can be utilized in the same Makefile.
@@ -126,7 +126,13 @@ APP_VERSION :=
 #	appear at /dev/video/usb when loaded. The default is "misc".
 DRIVER_PATH =
 
+INSTALL_DIR := /boot/home/config/non-packaged/add-ons/input_server/devices
+
 ## Include the Makefile-Engine
 DEVEL_DIRECTORY := \
 	$(shell findpaths -r "makefile_engine" B_FIND_PATH_DEVELOP_DIRECTORY)
+
 include $(DEVEL_DIRECTORY)/etc/makefile-engine
+
+uninstall:
+	rm /boot/home/config/non-packaged/add-ons/input_server/devices/barrier_client

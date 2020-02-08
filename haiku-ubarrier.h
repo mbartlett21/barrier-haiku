@@ -19,8 +19,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef USYNERGY_H
-#define USYNERGY_H
+#ifndef UBARRIER_H
+#define UBARRIER_H
 
 #include <InputServerDevice.h>
 #include <InterfaceDefs.h>
@@ -29,16 +29,16 @@
 #include <ObjectList.h>
 
 #include "Keymap.h"
-#include "uSynergy.h"
+#include "uBarrier.h"
 
 
 #define DEFAULT_NAME "haiku"
 
 
-class uSynergyInputServerDevice : public BHandler, public BInputServerDevice {
+class uBarrierInputServerDevice : public BHandler, public BInputServerDevice {
 	public:
-							uSynergyInputServerDevice();
-	virtual					~uSynergyInputServerDevice();
+							uBarrierInputServerDevice();
+	virtual					~uBarrierInputServerDevice();
 
 	virtual status_t		InitCheck();
 
@@ -50,7 +50,7 @@ class uSynergyInputServerDevice : public BHandler, public BInputServerDevice {
 
 	virtual	void			MessageReceived(BMessage* message);
 
-	// Synergy Hooks
+	// Barrier Hooks
 		bool				Connect();
 		bool				Send(const uint8_t* buffer, int32_t length);
 		bool				Receive(uint8_t* buffer, int maxLength,
@@ -59,15 +59,15 @@ class uSynergyInputServerDevice : public BHandler, public BInputServerDevice {
 		void				ScreenActive(bool active);
 		void				MouseCallback(uint16_t x, uint16_t y,
 								int16_t wheelX, int16_t wheelY,
-								uSynergyBool buttonLeft,
-								uSynergyBool buttonRight,
-								uSynergyBool buttonMiddle);
+								uBarrierBool buttonLeft,
+								uBarrierBool buttonRight,
+								uBarrierBool buttonMiddle);
 		void				KeyboardCallback(uint16_t key, uint16_t modifiers,
 								bool isKeyDown, bool isKeyRepeat);
 		void				JoystickCallback(uint8_t joyNum, uint16_t buttons,
 								int8_t leftStickX, int8_t leftStickY,
 								int8_t rightStickX, int8_t rightStickY);
-		void				ClipboardCallback(enum uSynergyClipboardFormat format,
+		void				ClipboardCallback(enum uBarrierClipboardFormat format,
 								const uint8_t* data, uint32_t size);
 
 	private:
@@ -78,15 +78,15 @@ class uSynergyInputServerDevice : public BHandler, public BInputServerDevice {
 	static status_t		_MainLoop(void* arg);
 
 		bool				threadActive;
-		thread_id			uSynergyThread;
-		uSynergyContext*	fContext;
+		thread_id			uBarrierThread;
+		uBarrierContext*	fContext;
 		int					fSocket;
 
 		uint32				fModifiers;
 		uint32				fCommandKey;
 		uint32				fControlKey;
 		char*				fFilename;
-		bool				fEnableSynergy;
+		bool				fEnableBarrier;
 		BString				fServerKeymap;
 		BString				fServerAddress;
 		BString				fClientName;
@@ -100,4 +100,4 @@ class uSynergyInputServerDevice : public BHandler, public BInputServerDevice {
 
 extern "C" BInputServerDevice* instantiate_input_device();
 
-#endif /* USYNERGY_H */
+#endif /* UBARRIER_H */

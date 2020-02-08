@@ -1,13 +1,13 @@
-# Synergy for Haiku
+# Barrier for Haiku
 
-![Synergy for Haiku](SynergyHaiku.png "Synergy for Haiku")
+![Barrier for Haiku](BarrierHaiku.png "Barrier for Haiku")
 
-Synergy for Haiku is a [Synergy](http://symless.com) client for the [Haiku Operating System](http://haiku-os.org).
+Barrier for Haiku is a [Barrier](https://github.com/debauchee/barrier) client for the [Haiku Operating System](http://haiku-os.org).
 
-Synergy allows a central machine running the Synergy server to share its Keyboard and Mouse across multiple systems running the client as if they were one desktop.
+Barrier allows a central machine running the Barrier server to share its Keyboard and Mouse across multiple systems running the client as if they were one desktop.
 
 ## Limitations
-  - Synergy for Haiku is only a Synergy client at this time
+  - Barrier for Haiku is only a Barrier client at this time
   - Some minor bugs still exist in the keymap translation
   - For now, client name is always "haiku"
   - SSL / TLS is not currently supported and must be disabled on the server
@@ -16,7 +16,7 @@ Synergy allows a central machine running the Synergy server to share its Keyboar
 Simply run ```make``` under Haiku
 
 ## Configuration
-  Create a configuration file at ```~/config/settings/synergy```
+  Create a configuration file at ```~/config/settings/barrier```
   
   ```ini
   enable = true
@@ -26,23 +26,23 @@ Simply run ```make``` under Haiku
 ### Options
   * **enable**: Enable the client (true|false)
   * **server**: Server address
-  * **server_keymap**: Keymap of the Synergy Server (X11|AT)
+  * **server_keymap**: Keymap of the Barrier Server (X11|AT)
   * **client_name**: Name of client (string, "haiku" default)
   
 ## Manual Installation
-Copy the synergy_client input add-on to the non-packaged add-ons directory ```~/config/non-packaged/add-ons/input_server/devices/```
+Copy the barrier_client input add-on to the non-packaged add-ons directory ```~/config/non-packaged/add-ons/input_server/devices/```
 
 ## License
 
-Synergy for Haiku is released under the same license as uSynergy (MIT)
+Barrier for Haiku is released under the same license as uBarrier (MIT)
 
 ## Thanks
 
-Thanks to all of those individuals who have made major contributions to Synergy for Haiku.
+Thanks to all of those individuals who have made major contributions to Barrier for Haiku.
 
 * Axel Dörfler (ATKeymap)
 * Stefano Ceccherini (wrapper)
 * Jérôme Duval (Keymap)
-* Alex Evans (uSynergy)
+* Alex Evans (uBarrier)
 * Jessica Hamilton (wrapper)
 * Ed Robbins (wrapper)

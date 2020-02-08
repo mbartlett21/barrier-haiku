@@ -48,11 +48,11 @@
 #include "ATKeymap.h"
 
 
-#include "haiku-usynergy.h"
+#include "haiku-ubarrier.h"
 
 
-#define TRACE_SYNERGY_DEVICE
-#ifdef TRACE_SYNERGY_DEVICE
+#define TRACE_BARRIER_DEVICE
+#ifdef TRACE_BARRIER_DEVICE
 #	define TRACE(x...) \
 		do { debug_printf(x); } while (0)
 #else
@@ -75,38 +75,38 @@ our_image(image_info& image)
 }
 
 
-const static uint32 kSynergyThreadPriority = B_FIRST_REAL_TIME_PRIORITY + 4;
+const static uint32 kBarrierThreadPriority = B_FIRST_REAL_TIME_PRIORITY + 4;
 
 
-// Static hook functions for uSynergy
+// Static hook functions for uBarrier
 
-static uSynergyBool
-uConnect(uSynergyCookie cookie)
+static uBarrierBool
+uConnect(uBarrierCookie cookie)
 {
-	uSynergyInputServerDevice* device = (uSynergyInputServerDevice*)cookie;
+	uBarrierInputServerDevice* device = (uBarrierInputServerDevice*)cookie;
 	return device->Connect();
 }
 
 
-static uSynergyBool
-uSend(uSynergyCookie cookie, const uint8* buffer, int length)
+static uBarrierBool
+uSend(uBarrierCookie cookie, const uint8* buffer, int length)
 {
-	uSynergyInputServerDevice* device = (uSynergyInputServerDevice*)cookie;
+	uBarrierInputServerDevice* device = (uBarrierInputServerDevice*)cookie;
 	return device->Send(buffer, length);
 }
 
 
-static uSynergyBool
-uReceive(uSynergyCookie cookie, uint8* buffer, int maxLength, int* outLength) {
-	uSynergyInputServerDevice* device = (uSynergyInputServerDevice*)cookie;
-	if ((uSynergyInputServerDevice*)device->Receive(buffer, maxLength, outLength))
-		return USYNERGY_TRUE;
-	return USYNERGY_FALSE;
+static uBarrierBool
+uReceive(uBarrierCookie cookie, uint8* buffer, int maxLength, int* outLength) {
+	uBarrierInputServerDevice* device = (uBarrierInputServerDevice*)cookie;
+	if ((uBarrierInputServerDevice*)device->Receive(buffer, maxLength, outLength))
+		return UBARRIER_TRUE;
+	return UBARRIER_FALSE;
 }
 
 
 static void
-uSleep(uSynergyCookie cookie, int milliseconds)
+uSleep(uBarrierCookie cookie, int milliseconds)
 {
 	snooze(milliseconds * 1000);
 }
@@ -120,73 +120,73 @@ uGetTime()
 
 
 static void
-uTrace(uSynergyCookie cookie, const char* text) {
-	uSynergyInputServerDevice* device = (uSynergyInputServerDevice*)cookie;
+uTrace(uBarrierCookie cookie, const char* text) {
+	uBarrierInputServerDevice* device = (uBarrierInputServerDevice*)cookie;
 	device->Trace(text);
 }
 
 
 static void
-uScreenActive(uSynergyCookie cookie, uSynergyBool active) {
-	uSynergyInputServerDevice* device = (uSynergyInputServerDevice*)cookie;
+uScreenActive(uBarrierCookie cookie, uBarrierBool active) {
+	uBarrierInputServerDevice* device = (uBarrierInputServerDevice*)cookie;
 	device->ScreenActive(active);
 }
 
 
 static void
-uMouseCallback(uSynergyCookie cookie, uint16 x, uint16 y,
-	int16 wheelX, int16 wheelY, uSynergyBool buttonLeft,
-	uSynergyBool buttonRight, uSynergyBool buttonMiddle)
+uMouseCallback(uBarrierCookie cookie, uint16 x, uint16 y,
+	int16 wheelX, int16 wheelY, uBarrierBool buttonLeft,
+	uBarrierBool buttonRight, uBarrierBool buttonMiddle)
 {
-	uSynergyInputServerDevice* device = (uSynergyInputServerDevice*)cookie;
+	uBarrierInputServerDevice* device = (uBarrierInputServerDevice*)cookie;
 	device->MouseCallback(x, y, wheelX, wheelY, buttonLeft,
 		buttonRight, buttonMiddle);
 }
 
 
 static void
-uKeyboardCallback(uSynergyCookie cookie, uint16 key, uint16 modifiers,
-	uSynergyBool isKeyDown, uSynergyBool isKeyRepeat)
+uKeyboardCallback(uBarrierCookie cookie, uint16 key, uint16 modifiers,
+	uBarrierBool isKeyDown, uBarrierBool isKeyRepeat)
 {
-	uSynergyInputServerDevice* device = (uSynergyInputServerDevice*)cookie;
+	uBarrierInputServerDevice* device = (uBarrierInputServerDevice*)cookie;
 	device->KeyboardCallback(key, modifiers, isKeyDown, isKeyRepeat);
 }
 
 
 static void
-uJoystickCallback(uSynergyCookie cookie, uint8_t joyNum, uint16_t buttons,
+uJoystickCallback(uBarrierCookie cookie, uint8_t joyNum, uint16_t buttons,
 	int8_t leftStickX, int8_t leftStickY, int8_t rightStickX, int8_t rightStickY)
 {
-	uSynergyInputServerDevice* device = (uSynergyInputServerDevice*)cookie;
+	uBarrierInputServerDevice* device = (uBarrierInputServerDevice*)cookie;
 	device->JoystickCallback(joyNum, buttons, leftStickX, leftStickY,
 		rightStickX, rightStickY);
 }
 
 
 static void
-uClipboardCallback(uSynergyCookie cookie, enum uSynergyClipboardFormat format,
+uClipboardCallback(uBarrierCookie cookie, enum uBarrierClipboardFormat format,
 	const uint8_t* data, uint32_t size)
 {
-	uSynergyInputServerDevice* device = (uSynergyInputServerDevice*)cookie;
+	uBarrierInputServerDevice* device = (uBarrierInputServerDevice*)cookie;
 	device->ClipboardCallback(format, data, size);
 }
 
 
-uSynergyInputServerDevice::uSynergyInputServerDevice()
+uBarrierInputServerDevice::uBarrierInputServerDevice()
 	:
-	BHandler("uSynergy Handler"),
+	BHandler("uBarrier Handler"),
 	threadActive(false),
 	fContext(NULL),
 	fSocket(-1),
-	fEnableSynergy(false),
+	fEnableBarrier(false),
 	fServerAddress(NULL),
 	fServerKeymap(NULL),
 	fClientName(DEFAULT_NAME),
 	fUpdateSettings(false),
-	fKeymapLock("synergy keymap lock")
+	fKeymapLock("barrier keymap lock")
 {
-	fContext = (uSynergyContext*)malloc(sizeof(uSynergyContext));
-	uSynergyInit(fContext);
+	fContext = (uBarrierContext*)malloc(sizeof(uBarrierContext));
+	uBarrierInit(fContext);
 
 	fContext->m_connectFunc				= uConnect;
 	fContext->m_receiveFunc				= uReceive;
@@ -200,7 +200,7 @@ uSynergyInputServerDevice::uSynergyInputServerDevice()
 	fContext->m_joystickCallback		= uJoystickCallback;
 	fContext->m_clipboardCallback		= uClipboardCallback;
 	fContext->m_clientName				= fClientName;
-	fContext->m_cookie					= (uSynergyCookie)this;
+	fContext->m_cookie					= (uBarrierCookie)this;
 
 	BRect screenRect = BScreen().Frame();
 	fContext->m_clientWidth		= (uint16_t)screenRect.Width() + 1;
@@ -213,7 +213,7 @@ uSynergyInputServerDevice::uSynergyInputServerDevice()
 
 	BPath path;
 	if (find_directory(B_USER_SETTINGS_DIRECTORY, &path) == B_OK)
-		path.Append("synergy");
+		path.Append("barrier");
 
 	fFilename = new char[strlen(path.Path()) + 1];
 	strcpy(fFilename, path.Path());
@@ -227,7 +227,7 @@ uSynergyInputServerDevice::uSynergyInputServerDevice()
 }
 
 
-uSynergyInputServerDevice::~uSynergyInputServerDevice()
+uBarrierInputServerDevice::~uBarrierInputServerDevice()
 {
 	if (be_app->Lock()) {
 		be_app->RemoveHandler(this);
@@ -239,13 +239,13 @@ uSynergyInputServerDevice::~uSynergyInputServerDevice()
 
 
 status_t
-uSynergyInputServerDevice::InitCheck()
+uBarrierInputServerDevice::InitCheck()
 {
 	input_device_ref *devices[3];
 
-	input_device_ref mouse = { (char*)"uSynergy Mouse", B_POINTING_DEVICE,
+	input_device_ref mouse = { (char*)"uBarrier Mouse", B_POINTING_DEVICE,
 		(void *)this };
-	input_device_ref keyboard = { (char*)"uSynergy Keyboard", B_KEYBOARD_DEVICE,
+	input_device_ref keyboard = { (char*)"uBarrier Keyboard", B_KEYBOARD_DEVICE,
 		(void *)this };
 
 	devices[0] = &mouse;
@@ -259,7 +259,7 @@ uSynergyInputServerDevice::InitCheck()
 
 
 void
-uSynergyInputServerDevice::MessageReceived(BMessage* message)
+uBarrierInputServerDevice::MessageReceived(BMessage* message)
 {
 	switch (message->what) {
 		case B_PATH_MONITOR:
@@ -294,10 +294,10 @@ uSynergyInputServerDevice::MessageReceived(BMessage* message)
 				be_clipboard->Unlock();
 			}
 			if (len > 0 && text != NULL) {
-				uSynergySendClipboard(fContext, text);
-				TRACE("synergy: data added to clipboard\n");
+				uBarrierSendClipboard(fContext, text);
+				TRACE("barrier: data added to clipboard\n");
 			} else
-				TRACE("synergy: couldn't add data to clipboard\n");
+				TRACE("barrier: couldn't add data to clipboard\n");
 		}
 		default:
 			BHandler::MessageReceived(message);
@@ -306,34 +306,34 @@ uSynergyInputServerDevice::MessageReceived(BMessage* message)
 
 
 status_t
-uSynergyInputServerDevice::Start(const char* name, void* cookie)
+uBarrierInputServerDevice::Start(const char* name, void* cookie)
 {
-	if (fServerAddress.Length() == 0 || fEnableSynergy == false) {
-		TRACE("synergy: not enabled, or no server specified\n");
+	if (fServerAddress.Length() == 0 || fEnableBarrier == false) {
+		TRACE("barrier: not enabled, or no server specified\n");
 		return B_NO_ERROR;
 	}
 
 	status_t status = B_OK;
 	char threadName[B_OS_NAME_LENGTH];
-	snprintf(threadName, B_OS_NAME_LENGTH, "uSynergy haiku");
+	snprintf(threadName, B_OS_NAME_LENGTH, "uBarrier haiku");
 
-	TRACE("synergy: thread active = %d\n", threadActive);
+	TRACE("barrier: thread active = %d\n", threadActive);
 
 	if ((atomic_get_and_set((int32*)&threadActive, true) & true) == true) {
-		TRACE("synergy: main thread already running\n");
+		TRACE("barrier: main thread already running\n");
 		return B_OK;
 	}
 
-	uSynergyThread = spawn_thread(_MainLoop, threadName, kSynergyThreadPriority,
+	uBarrierThread = spawn_thread(_MainLoop, threadName, kBarrierThreadPriority,
 		(void*)this);
 
-	if (uSynergyThread < 0) {
+	if (uBarrierThread < 0) {
 		threadActive = false;
-		status = uSynergyThread;
-		TRACE("synergy: spawn thread failed: %" B_PRIx32 "\n", status);
+		status = uBarrierThread;
+		TRACE("barrier: spawn thread failed: %" B_PRIx32 "\n", status);
 	} else {
 		be_clipboard->StartWatching(this);
-		status = resume_thread(uSynergyThread);
+		status = resume_thread(uBarrierThread);
 	}
 
 	return status;
@@ -341,18 +341,18 @@ uSynergyInputServerDevice::Start(const char* name, void* cookie)
 
 
 status_t
-uSynergyInputServerDevice::Stop(const char* name, void* cookie)
+uBarrierInputServerDevice::Stop(const char* name, void* cookie)
 {
 	threadActive = false;
 	// this will stop the thread as soon as it reads the next packet
 	be_clipboard->StopWatching(this);
 
-	if (uSynergyThread >= 0) {
+	if (uBarrierThread >= 0) {
 		// unblock the thread, which might wait on a semaphore.
-		suspend_thread(uSynergyThread);
-		resume_thread(uSynergyThread);
+		suspend_thread(uBarrierThread);
+		resume_thread(uBarrierThread);
 		status_t dummy;
-		wait_for_thread(uSynergyThread, &dummy);
+		wait_for_thread(uBarrierThread, &dummy);
 	}
 
 	return B_OK;
@@ -360,7 +360,7 @@ uSynergyInputServerDevice::Stop(const char* name, void* cookie)
 
 
 status_t
-uSynergyInputServerDevice::SystemShuttingDown()
+uBarrierInputServerDevice::SystemShuttingDown()
 {
 	threadActive = false;
 
@@ -369,7 +369,7 @@ uSynergyInputServerDevice::SystemShuttingDown()
 
 
 status_t
-uSynergyInputServerDevice::Control(const char* name, void* cookie,
+uBarrierInputServerDevice::Control(const char* name, void* cookie,
 	uint32 command, BMessage* message)
 {
 	if (command == B_KEY_MAP_CHANGED) {
@@ -382,12 +382,12 @@ uSynergyInputServerDevice::Control(const char* name, void* cookie,
 
 
 status_t
-uSynergyInputServerDevice::_MainLoop(void* arg)
+uBarrierInputServerDevice::_MainLoop(void* arg)
 {
-	uSynergyInputServerDevice *inputDevice = (uSynergyInputServerDevice*)arg;
+	uBarrierInputServerDevice *inputDevice = (uBarrierInputServerDevice*)arg;
 
 	while (inputDevice->threadActive) {
-		uSynergyUpdate(inputDevice->fContext);
+		uBarrierUpdate(inputDevice->fContext);
 
 		if (inputDevice->fUpdateSettings) {
 			inputDevice->_UpdateSettings();
@@ -403,7 +403,7 @@ uSynergyInputServerDevice::_MainLoop(void* arg)
 
 
 void
-uSynergyInputServerDevice::_UpdateSettings()
+uBarrierInputServerDevice::_UpdateSettings()
 {
 	BAutolock lock(fKeymapLock);
 	fKeymap.RetrieveCurrent();
@@ -415,7 +415,7 @@ uSynergyInputServerDevice::_UpdateSettings()
 	if (handle == NULL)
 		return;
 
-	fEnableSynergy = get_driver_boolean_parameter(handle, "enable", false, false);
+	fEnableBarrier = get_driver_boolean_parameter(handle, "enable", false, false);
 	fServerKeymap = get_driver_parameter(handle, "server_keymap", NULL, NULL);
 	fServerAddress = get_driver_parameter(handle, "server", NULL, NULL);
 	fClientName = get_driver_parameter(handle, "client_name", DEFAULT_NAME, DEFAULT_NAME);
@@ -425,9 +425,9 @@ uSynergyInputServerDevice::_UpdateSettings()
 
 
 bool
-uSynergyInputServerDevice::Connect()
+uBarrierInputServerDevice::Connect()
 {
-	if (fServerAddress.Length() == 0 || fEnableSynergy == false)
+	if (fServerAddress.Length() == 0 || fEnableBarrier == false)
 		goto exit;
 
 	struct sockaddr_in server;
@@ -436,17 +436,17 @@ uSynergyInputServerDevice::Connect()
 	server.sin_port = htons(24800);
 	inet_aton(fServerAddress.String(), &server.sin_addr);
 
-	TRACE("synergy: connecting to %s:%d\n", fServerAddress.String(), 24800);
+	TRACE("barrier: connecting to %s:%d\n", fServerAddress.String(), 24800);
 
 	fSocket = socket(PF_INET, SOCK_STREAM, 0);
 	if (fSocket < 0) {
-		TRACE("synergy: socket couldn't be created\n");
+		TRACE("barrier: socket couldn't be created\n");
 		goto exit;
 	}
 
 	if (connect(fSocket, (struct sockaddr*)&server,
 			sizeof(struct sockaddr)) < 0 ) {
-		TRACE("synergy: %s: %x\n", "failed to connect to remote host", errno);
+		TRACE("barrier: %s: %x\n", "failed to connect to remote host", errno);
 		close(fSocket);
 		fSocket = -1;
 		goto exit;
@@ -460,7 +460,7 @@ exit:
 
 
 bool
-uSynergyInputServerDevice::Send(const uint8_t* buffer, int32_t length)
+uBarrierInputServerDevice::Send(const uint8_t* buffer, int32_t length)
 {
 	if (send(fSocket, buffer, length, 0) != length)
 		return false;
@@ -469,7 +469,7 @@ uSynergyInputServerDevice::Send(const uint8_t* buffer, int32_t length)
 
 
 bool
-uSynergyInputServerDevice::Receive(uint8_t *buffer, int maxLength, int* outLength)
+uBarrierInputServerDevice::Receive(uint8_t *buffer, int maxLength, int* outLength)
 {
 	if ((*outLength = recv(fSocket, buffer, maxLength, 0)) == -1)
 		return false;
@@ -478,10 +478,10 @@ uSynergyInputServerDevice::Receive(uint8_t *buffer, int maxLength, int* outLengt
 
 
 void
-uSynergyInputServerDevice::Trace(const char *text)
+uBarrierInputServerDevice::Trace(const char *text)
 {
 	BNotification notify(B_INFORMATION_NOTIFICATION);
-	BString group("Synergy");
+	BString group("Barrier");
 	BString content(text);
 
 	notify.SetGroup(group);
@@ -516,13 +516,13 @@ uSynergyInputServerDevice::Trace(const char *text)
 
 
 void
-uSynergyInputServerDevice::ScreenActive(bool active)
+uBarrierInputServerDevice::ScreenActive(bool active)
 {
 }
 
 
 BMessage*
-uSynergyInputServerDevice::_BuildMouseMessage(uint32 what, uint64 when,
+uBarrierInputServerDevice::_BuildMouseMessage(uint32 what, uint64 when,
 	uint32 buttons, float x, float y) const
 {
 	BMessage* message = new BMessage(what);
@@ -542,9 +542,9 @@ uSynergyInputServerDevice::_BuildMouseMessage(uint32 what, uint64 when,
 
 
 void
-uSynergyInputServerDevice::MouseCallback(uint16_t x, uint16_t y, int16_t wheelX,
-	int16_t wheelY, uSynergyBool buttonLeft, uSynergyBool buttonRight,
-	uSynergyBool buttonMiddle)
+uBarrierInputServerDevice::MouseCallback(uint16_t x, uint16_t y, int16_t wheelX,
+	int16_t wheelY, uBarrierBool buttonLeft, uBarrierBool buttonRight,
+	uBarrierBool buttonMiddle)
 {
 	static uint32_t			 oldButtons = 0, oldPressedButtons = 0;
 	uint32_t			 buttons = 0;
@@ -556,13 +556,13 @@ uSynergyInputServerDevice::MouseCallback(uint16_t x, uint16_t y, int16_t wheelX,
 
 	int64 timestamp = system_time();
 
-	if (buttonLeft == USYNERGY_TRUE) {
+	if (buttonLeft == UBARRIER_TRUE) {
 		buttons |= 1 << 0;
 	}
-	if (buttonRight == USYNERGY_TRUE) {
+	if (buttonRight == UBARRIER_TRUE) {
 		buttons |= 1 << 1;
 	}
-	if (buttonMiddle == USYNERGY_TRUE) {
+	if (buttonMiddle == UBARRIER_TRUE) {
 		buttons |= 1 << 2;
 	}
 
@@ -614,7 +614,7 @@ uSynergyInputServerDevice::MouseCallback(uint16_t x, uint16_t y, int16_t wheelX,
 
 
 void
-uSynergyInputServerDevice::KeyboardCallback(uint16_t scancode,
+uBarrierInputServerDevice::KeyboardCallback(uint16_t scancode,
 	uint16_t _modifiers, bool isKeyDown, bool isKeyRepeat)
 {
 	static uint32 lastScanCode = 0;
@@ -626,7 +626,7 @@ uSynergyInputServerDevice::KeyboardCallback(uint16_t scancode,
 	uint32_t keycode = 0;
 
 	// XXX: This is a dirty hack.
-	// See https://github.com/synergy/synergy/issues/4640
+	// See https://github.com/barrier/barrier/issues/4640
 	if (fServerKeymap == "X11") {
 		if (scancode > 0 && scancode < sizeof(kXKeycodeMap)/sizeof(uint32))
 			keycode = kXKeycodeMap[scancode - 1];
@@ -645,7 +645,7 @@ uSynergyInputServerDevice::KeyboardCallback(uint16_t scancode,
 		}
 	}
 
-	TRACE("synergy: scancode = 0x%02x, keycode = 0x%x\n", scancode, keycode);
+	TRACE("barrier: scancode = 0x%02x, keycode = 0x%x\n", scancode, keycode);
 
 	if (keycode < 256) {
 		if (isKeyDown)
@@ -658,29 +658,29 @@ uSynergyInputServerDevice::KeyboardCallback(uint16_t scancode,
 	if (isKeyDown && keycode == 0x34 // DELETE KEY
 		&& (states[fCommandKey >> 3] & (1 << (7 - (fCommandKey & 0x7))))
 		&& (states[fControlKey >> 3] & (1 << (7 - (fControlKey & 0x7))))) {
-		TRACE("synergy: TeamMonitor called\n");
+		TRACE("barrier: TeamMonitor called\n");
 	}
 #endif
 
 	uint32 modifiers = 0;
 
-	if (_modifiers & USYNERGY_MODIFIER_SHIFT)
+	if (_modifiers & UBARRIER_MODIFIER_SHIFT)
 		modifiers |= B_SHIFT_KEY | B_LEFT_SHIFT_KEY;
-	if (_modifiers & USYNERGY_MODIFIER_CTRL)
+	if (_modifiers & UBARRIER_MODIFIER_CTRL)
 		modifiers |= B_CONTROL_KEY | B_LEFT_CONTROL_KEY;
-	if (_modifiers & USYNERGY_MODIFIER_ALT)
+	if (_modifiers & UBARRIER_MODIFIER_ALT)
 		modifiers |= B_COMMAND_KEY | B_LEFT_COMMAND_KEY;
-	if (_modifiers & USYNERGY_MODIFIER_META)
+	if (_modifiers & UBARRIER_MODIFIER_META)
 		modifiers |= B_MENU_KEY;
-	if (_modifiers & USYNERGY_MODIFIER_WIN)
+	if (_modifiers & UBARRIER_MODIFIER_WIN)
 		modifiers |= B_OPTION_KEY | B_LEFT_OPTION_KEY;
-	if (_modifiers & USYNERGY_MODIFIER_ALT_GR)
+	if (_modifiers & UBARRIER_MODIFIER_ALT_GR)
 		modifiers |= B_RIGHT_OPTION_KEY | B_OPTION_KEY;
-	if (_modifiers & USYNERGY_MODIFIER_CAPSLOCK)
+	if (_modifiers & UBARRIER_MODIFIER_CAPSLOCK)
 		modifiers |= B_CAPS_LOCK;
-	if (_modifiers & USYNERGY_MODIFIER_NUMLOCK)
+	if (_modifiers & UBARRIER_MODIFIER_NUMLOCK)
 		modifiers |= B_NUM_LOCK;
-	if (_modifiers & USYNERGY_MODIFIER_SCROLLOCK)
+	if (_modifiers & UBARRIER_MODIFIER_SCROLLOCK)
 		modifiers |= B_SCROLL_LOCK;
 
 	//bool isLock
@@ -691,7 +691,7 @@ uSynergyInputServerDevice::KeyboardCallback(uint16_t scancode,
 			if (message == NULL)
 				return;
 
-			TRACE("synergy: modifiers: 0x%04" B_PRIx32 " & 0x%04" B_PRIx32 "\n",
+			TRACE("barrier: modifiers: 0x%04" B_PRIx32 " & 0x%04" B_PRIx32 "\n",
 				modifiers, fModifiers);
 
 			if (isKeyDown)
@@ -699,7 +699,7 @@ uSynergyInputServerDevice::KeyboardCallback(uint16_t scancode,
 			else
 				modifiers &= ~fModifiers;
 
-			TRACE("synergy: modifiers changed: 0x%04" B_PRIx32 " => 0x%04"
+			TRACE("barrier: modifiers changed: 0x%04" B_PRIx32 " => 0x%04"
 				B_PRIx32 "\n", fModifiers, modifiers);
 
 			message->AddInt64("when", timestamp);
@@ -772,7 +772,7 @@ uSynergyInputServerDevice::KeyboardCallback(uint16_t scancode,
 
 
 void
-uSynergyInputServerDevice::JoystickCallback(uint8_t joyNum, uint16_t buttons,
+uBarrierInputServerDevice::JoystickCallback(uint8_t joyNum, uint16_t buttons,
 	int8_t leftStickX, int8_t leftStickY,
 	int8_t rightStickX, int8_t rightStickY)
 {
@@ -780,10 +780,10 @@ uSynergyInputServerDevice::JoystickCallback(uint8_t joyNum, uint16_t buttons,
 
 
 void
-uSynergyInputServerDevice::ClipboardCallback(enum uSynergyClipboardFormat format,
+uBarrierInputServerDevice::ClipboardCallback(enum uBarrierClipboardFormat format,
 	const uint8_t *data, uint32_t size)
 {
-	if (format != USYNERGY_CLIPBOARD_FORMAT_TEXT)
+	if (format != UBARRIER_CLIPBOARD_FORMAT_TEXT)
 		return;
 
 	if (be_clipboard->Lock()) {
@@ -792,11 +792,11 @@ uSynergyInputServerDevice::ClipboardCallback(enum uSynergyClipboardFormat format
 		clip->AddData("text/plain", B_MIME_TYPE, data, size);
 		status_t result = be_clipboard->Commit();
 		if (result != B_OK)
-			TRACE("synergy: failed to commit data to clipboard\n");
+			TRACE("barrier: failed to commit data to clipboard\n");
 
 		be_clipboard->Unlock();
 	} else {
-		TRACE("synergy: could not lock clipboard\n");
+		TRACE("barrier: could not lock clipboard\n");
 	}
 }
 
@@ -804,6 +804,6 @@ uSynergyInputServerDevice::ClipboardCallback(enum uSynergyClipboardFormat format
 extern "C" BInputServerDevice*
 instantiate_input_device()
 {
-	return new (std::nothrow)uSynergyInputServerDevice;
+	return new (std::nothrow)uBarrierInputServerDevice;
 }
 
