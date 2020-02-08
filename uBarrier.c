@@ -428,11 +428,22 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 			parse_msg += size;
 		}
 	}
+	else if (UBARRIER_IS_PACKET("CBYE")) 
+	{
+		// Server shutting down
+		//		kMsgCClose 			= "CBYE"
+		sTrace(context, "Server disconnecting");
+	}
+	else if (UBARRIER_IS_PACKET("EUNK")) 
+	{
+		// Client is Unknown
+		//		kMsgEUnknown		= "EUNK"
+		sTrace(context, "Client is unknown to server");
+	}
 	else
 	{
 		// Unknown packet, could be any of these
 		//		kMsgCNoop 			= "CNOP"
-		//		kMsgCClose 			= "CBYE"
 		//		kMsgCClipboard 		= "CCLP%1i%4i"
 		//		kMsgCScreenSaver 	= "CSEC%1i"
 		//		kMsgDKeyRepeat		= "DKRP%2i%2i%2i%2i"
@@ -440,7 +451,6 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		//		kMsgDMouseRelMove	= "DMRM%2i%2i"
 		//		kMsgEIncompatible	= "EICV%2i%2i"
 		//		kMsgEBusy 			= "EBSY"
-		//		kMsgEUnknown		= "EUNK"
 		//		kMsgEBad			= "EBAD"
 		char buffer[64];
 		sprintf(buffer, "Unknown packet '%c%c%c%c'", message[4], message[5], message[6], message[7]);
