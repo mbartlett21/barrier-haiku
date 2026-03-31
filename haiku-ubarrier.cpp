@@ -449,6 +449,18 @@ uBarrierInputServerDevice::Connect()
 		goto exit;
 	}
 
+	struct timeval timeout;
+	timeout.tv_sec = 60;
+	timeout.tv_usec = 0;
+
+	if (setsockopt (fSocket, SOL_SOCKET, SO_RCVTIMEO, &timeout,
+			sizeof timeout) < 0)
+		TRACE("setsockopt failed\n");
+
+	if (setsockopt (fSocket, SOL_SOCKET, SO_SNDTIMEO, &timeout,
+			sizeof timeout) < 0)
+		TRACE("setsockopt failed\n");
+
 	if (connect(fSocket, (struct sockaddr*)&server,
 			sizeof(struct sockaddr)) < 0 ) {
 		TRACE("barrier: %s: %x\n", "failed to connect to remote host", errno);
