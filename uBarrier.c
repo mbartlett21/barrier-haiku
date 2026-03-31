@@ -180,14 +180,14 @@ static void sSendMouseCallback(uBarrierContext *context)
 /**
 @brief Send keyboard callback when a key has been pressed or released
 **/
-static void sSendKeyboardCallback(uBarrierContext *context, uint16_t key, uint16_t modifiers, uBarrierBool down, uBarrierBool repeat)
+static void sSendKeyboardCallback(uBarrierContext *context, uint16_t key, uint16_t modifiers, uint16_t id, uBarrierBool down, uBarrierBool repeat)
 {
 	// Skip if no callback is installed
 	if (context->m_keyboardCallback == 0L)
 		return;
 
 	// Send callback
-	context->m_keyboardCallback(context->m_cookie, key, modifiers, down, repeat);
+	context->m_keyboardCallback(context->m_cookie, key, modifiers, id, down, repeat);
 }
 
 
@@ -360,20 +360,21 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		// Key down
 		//		kMsgDKeyDown		= "DKDN%2i%2i%2i"
 		//		kMsgDKeyDown1_0		= "DKDN%2i%2i"
-		//uint16_t id = sNetToNative16(message+8);
+		uint16_t id = sNetToNative16(message+8);
 		uint16_t mod = sNetToNative16(message+10);
 		uint16_t key = sNetToNative16(message+12);
-		sSendKeyboardCallback(context, key, mod, UBARRIER_TRUE, UBARRIER_FALSE);
+		sSendKeyboardCallback(context, key, mod, id, UBARRIER_TRUE, UBARRIER_FALSE);
 	}
 	else if (UBARRIER_IS_PACKET("DKRP"))
 	{
 		// Key repeat
 		//		kMsgDKeyRepeat		= "DKRP%2i%2i%2i%2i"
 		//		kMsgDKeyRepeat1_0	= "DKRP%2i%2i%2i"
+		uint16_t id = sNetToNative16(message+8);
 		uint16_t mod = sNetToNative16(message+10);
 //		uint16_t count = sNetToNative16(message+12);
 		uint16_t key = sNetToNative16(message+14);
-		sSendKeyboardCallback(context, key, mod, UBARRIER_TRUE, UBARRIER_TRUE);
+		sSendKeyboardCallback(context, key, mod, id, UBARRIER_TRUE, UBARRIER_TRUE);
 	}
 	else if (UBARRIER_IS_PACKET("DKUP"))
 	{
@@ -381,9 +382,10 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		//		kMsgDKeyUp			= "DKUP%2i%2i%2i"
 		//		kMsgDKeyUp1_0		= "DKUP%2i%2i"
 		//uint16 id=Endian::sNetToNative(sbuf[4]);
+		uint16_t id = sNetToNative16(message+8);
 		uint16_t mod = sNetToNative16(message+10);
 		uint16_t key = sNetToNative16(message+12);
-		sSendKeyboardCallback(context, key, mod, UBARRIER_FALSE, UBARRIER_FALSE);
+		sSendKeyboardCallback(context, key, mod, id, UBARRIER_FALSE, UBARRIER_FALSE);
 	}
 	else if (UBARRIER_IS_PACKET("DGBT"))
 	{

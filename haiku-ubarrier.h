@@ -64,7 +64,7 @@ class uBarrierInputServerDevice : public BHandler, public BInputServerDevice {
 								uBarrierBool buttonLeft,
 								uBarrierBool buttonRight,
 								uBarrierBool buttonMiddle);
-		void				KeyboardCallback(uint16_t key, uint16_t modifiers,
+		void				KeyboardCallback(uint16_t key, uint16_t modifiers, uint16_t id,
 								bool isKeyDown, bool isKeyRepeat);
 		void				JoystickCallback(uint8_t joyNum, uint16_t buttons,
 								int8_t leftStickX, int8_t leftStickY,

@@ -145,11 +145,11 @@ uMouseCallback(uBarrierCookie cookie, uint16 x, uint16 y,
 
 
 static void
-uKeyboardCallback(uBarrierCookie cookie, uint16 key, uint16 modifiers,
+uKeyboardCallback(uBarrierCookie cookie, uint16 key, uint16 modifiers, uint16_t id,
 	uBarrierBool isKeyDown, uBarrierBool isKeyRepeat)
 {
 	uBarrierInputServerDevice* device = (uBarrierInputServerDevice*)cookie;
-	device->KeyboardCallback(key, modifiers, isKeyDown, isKeyRepeat);
+	device->KeyboardCallback(key, modifiers, id, isKeyDown, isKeyRepeat);
 }
 
 
@@ -632,7 +632,7 @@ uBarrierInputServerDevice::MouseCallback(uint16_t x, uint16_t y, int16_t wheelX,
 
 void
 uBarrierInputServerDevice::KeyboardCallback(uint16_t scancode,
-	uint16_t _modifiers, bool isKeyDown, bool isKeyRepeat)
+	uint16_t _modifiers, uint16_t id, bool isKeyDown, bool isKeyRepeat)
 {
 	static uint32 lastScanCode = 0;
 	static uint32 repeatCount = 1;
