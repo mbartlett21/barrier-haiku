@@ -183,7 +183,8 @@ uBarrierInputServerDevice::uBarrierInputServerDevice()
 	fServerKeymap(NULL),
 	fClientName(DEFAULT_NAME),
 	fUpdateSettings(false),
-	fKeymapLock("barrier keymap lock")
+	fKeymapLock("barrier keymap lock"),
+	fJustChangedClipboard(false)
 {
 	fContext = (uBarrierContext*)malloc(sizeof(uBarrierContext));
 	uBarrierInit(fContext);
@@ -282,6 +283,11 @@ uBarrierInputServerDevice::MessageReceived(BMessage* message)
 		}
 		case B_CLIPBOARD_CHANGED:
 		{
+			/* prevent immediately sending clipboard back */
+			if (fJustChangedClipboard) {
+				fJustChangedClipboard = false;
+				return;
+			}
 			const char *text = NULL;
 			ssize_t len = 0;
 			BMessage *clip = NULL;
@@ -804,6 +810,7 @@ uBarrierInputServerDevice::ClipboardCallback(enum uBarrierClipboardFormat format
 		return;
 
 	if (be_clipboard->Lock()) {
+		fJustChangedClipboard = true;
 		be_clipboard->Clear();
 		BMessage *clip = be_clipboard->Data();
 		clip->AddData("text/plain", B_MIME_TYPE, data, size);
