@@ -537,6 +537,19 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		//		kMsgEUnknown		= "EUNK"
 		sTrace(context, "Client is unknown to server");
 	}
+	else if (UBARRIER_IS_PACKET("EBSY")) 
+	{
+		sTrace(context, "Server is busy");
+	}
+	else if (UBARRIER_IS_PACKET("EICV")) 
+	{
+		sTrace(context, "Server is an incompatible version");
+	}
+	else if (UBARRIER_IS_PACKET("CNOP"))
+	{
+		// nothing
+		return;
+	}
 	else
 	{
 		// Unknown packet, could be any of these
