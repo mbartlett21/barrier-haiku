@@ -33,6 +33,9 @@
 
 #include <cstdio>
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 
 #define DEFAULT_NAME "haiku"
 
@@ -79,10 +82,15 @@ class uBarrierInputServerDevice : public BHandler, public BInputServerDevice {
 		void			_UpdateSettings();
 	static status_t		_MainLoop(void* arg);
 
+		void			_CloseSSL();
+
 		bool				threadActive;
 		thread_id			uBarrierThread;
 		uBarrierContext*	fContext;
 		int					fSocket;
+
+		SSL_CTX*			fSSLContext;
+		SSL*				fSSL;
 
 		uint32				fModifiers;
 		uint32				fCommandKey;
@@ -91,6 +99,7 @@ class uBarrierInputServerDevice : public BHandler, public BInputServerDevice {
 		bool				fEnableBarrier;
 		BString				fServerKeymap;
 		BString				fServerAddress;
+		bool				fServerSsl;
 		BString				fClientName;
 		bool				fJustChangedClipboard;
 

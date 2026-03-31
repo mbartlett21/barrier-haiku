@@ -42,6 +42,9 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
 #include <driver_settings.h>
 #include <keyboard_mouse_driver.h>
 
@@ -178,6 +181,8 @@ uBarrierInputServerDevice::uBarrierInputServerDevice()
 	threadActive(false),
 	fContext(NULL),
 	fSocket(-1),
+	fSSLContext(NULL),
+	fSSL(NULL),
 	fEnableBarrier(false),
 	fServerAddress(NULL),
 	fServerKeymap(NULL),
@@ -186,6 +191,10 @@ uBarrierInputServerDevice::uBarrierInputServerDevice()
 	fKeymapLock("barrier keymap lock"),
 	fJustChangedClipboard(false)
 {
+	SSL_library_init();
+	SSL_load_error_strings();
+	OpenSSL_add_all_algorithms();
+
 	fContext = (uBarrierContext*)malloc(sizeof(uBarrierContext));
 	uBarrierInit(fContext);
 
@@ -235,7 +244,23 @@ uBarrierInputServerDevice::~uBarrierInputServerDevice()
 		be_app->Unlock();
 	}
 
+	_CloseSSL();
 	free(fContext);
+}
+
+
+void
+uBarrierInputServerDevice::_CloseSSL()
+{
+	if (fSSL != NULL) {
+		SSL_shutdown(fSSL);
+		SSL_free(fSSL);
+		fSSL = NULL;
+	}
+	if (fSSLContext != NULL) {
+		SSL_CTX_free(fSSLContext);
+		fSSLContext = NULL;
+	}
 }
 
 
@@ -401,6 +426,9 @@ uBarrierInputServerDevice::_MainLoop(void* arg)
 		}
 	}
 
+	// Tear down SSL before closing the raw socket
+	inputDevice->_CloseSSL();
+
 	close(inputDevice->fSocket);
 	inputDevice->fSocket = -1;
 
@@ -424,6 +452,7 @@ uBarrierInputServerDevice::_UpdateSettings()
 	fEnableBarrier = get_driver_boolean_parameter(handle, "enable", false, false);
 	fServerKeymap = get_driver_parameter(handle, "server_keymap", NULL, NULL);
 	fServerAddress = get_driver_parameter(handle, "server", NULL, NULL);
+	fServerSsl = get_driver_boolean_parameter(handle, "server_ssl", false, false);
 	fClientName = get_driver_parameter(handle, "client_name", DEFAULT_NAME, DEFAULT_NAME);
 
 	unload_driver_settings(handle);
@@ -433,8 +462,12 @@ uBarrierInputServerDevice::_UpdateSettings()
 bool
 uBarrierInputServerDevice::Connect()
 {
+	int ret;
 	if (fServerAddress.Length() == 0 || fEnableBarrier == false)
 		goto exit;
+
+	// Clean up any previous SSL/socket state
+	_CloseSSL();
 
 	if (fSocket != -1) {
 		close(fSocket);
@@ -459,6 +492,7 @@ uBarrierInputServerDevice::Connect()
 	timeout.tv_sec = 60;
 	timeout.tv_usec = 0;
 
+	/* timeout change errors aren't fatal */
 	if (setsockopt (fSocket, SOL_SOCKET, SO_RCVTIMEO, &timeout,
 			sizeof timeout) < 0)
 		TRACE("setsockopt failed\n");
@@ -473,8 +507,55 @@ uBarrierInputServerDevice::Connect()
 		close(fSocket);
 		fSocket = -1;
 		goto exit;
-	} else
+	}
+
+	if (!fServerSsl) {
+		TRACE("barrier: SSL not being used\n");
 		return true;
+	}
+
+	/* we are assuming that the connection will use TLS */
+
+	fSSLContext = SSL_CTX_new(TLS_client_method());
+	if (fSSLContext == NULL) {
+		TRACE("barrier: SSL_CTX_new failed\n");
+		close(fSocket);
+		fSocket = -1;
+		goto exit;
+	}
+
+	/* TODO: Check with the user for a specific allowed certificate */
+	SSL_CTX_set_verify(fSSLContext, SSL_VERIFY_NONE, NULL);
+
+	fSSL = SSL_new(fSSLContext);
+	if (fSSL == NULL) {
+		TRACE("barrier: SSL_new failed\n");
+		close(fSocket);
+		fSocket = -1;
+		_CloseSSL();
+		goto exit;
+	}
+
+	if (SSL_set_fd(fSSL, fSocket) != 1) {
+		TRACE("barrier: SSL_set_fd failed\n");
+		close(fSocket);
+		fSocket = -1;
+		_CloseSSL();
+		goto exit;
+	}
+
+	if ((ret = SSL_connect(fSSL)) != 1) {
+		int err = SSL_get_error(fSSL, ret);
+		TRACE("barrier: SSL_connect failed, error %d\n", err);
+		close(fSocket);
+		fSocket = -1;
+		_CloseSSL();
+		goto exit;
+	}
+
+	TRACE("barrier: SSL connected, cipher: %s\n",
+		SSL_get_cipher(fSSL));
+	return true;
 
 exit:
 	snooze(1000000);
@@ -485,7 +566,12 @@ exit:
 bool
 uBarrierInputServerDevice::Send(const uint8_t* buffer, int32_t length)
 {
-	if (send(fSocket, buffer, length, 0) != length)
+	if (fServerSsl && (fSSL == NULL))
+		return false;
+	int sent = fServerSsl ?
+		SSL_write(fSSL, buffer, length) :
+		send(fSocket, buffer, length, 0);
+	if (sent != length)
 		return false;
 	return true;
 }
@@ -494,7 +580,11 @@ uBarrierInputServerDevice::Send(const uint8_t* buffer, int32_t length)
 bool
 uBarrierInputServerDevice::Receive(uint8_t *buffer, int maxLength, int* outLength)
 {
-	if ((*outLength = recv(fSocket, buffer, maxLength, 0)) == -1)
+	if (fServerSsl && (fSSL == NULL))
+		return false;
+	if ((*outLength = (fServerSsl ?
+			SSL_read(fSSL, buffer, maxLength) :
+			recv(fSocket, buffer, maxLength, 0))) <= 0)
 		return false;
 	return true;
 }

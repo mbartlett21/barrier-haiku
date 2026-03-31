@@ -22,11 +22,13 @@ Simply run ```make``` under Haiku
   enable = true
   server = 192.168.1.101
   server_keymap = "X11"
+  server_ssl = true
   ```
 ### Options
   * **enable**: Enable the client (true|false)
   * **server**: Server address
-  * **server_keymap**: Keymap of the Barrier Server (X11|AT)
+  * **server_keymap**: Keymap of the Barrier Server (X11|AT). `AT` for Windows servers.
+  * **server_ssl**: Whether the server uses ssl/tls (true|false).
   * **client_name**: Name of client (string, "haiku" default)
   
 ## Manual Installation
