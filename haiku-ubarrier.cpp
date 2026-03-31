@@ -294,7 +294,7 @@ uBarrierInputServerDevice::MessageReceived(BMessage* message)
 				be_clipboard->Unlock();
 			}
 			if (len > 0 && text != NULL) {
-				uBarrierSendClipboard(fContext, text);
+				uBarrierSendClipboard(fContext, text, len);
 				TRACE("barrier: data added to clipboard\n");
 			} else
 				TRACE("barrier: couldn't add data to clipboard\n");

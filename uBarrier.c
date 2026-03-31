@@ -26,7 +26,7 @@ freely, subject to the following restrictions:
 #include "uBarrier.h"
 #include <stdio.h>
 #include <string.h>
-
+#include <ctype.h>
 
 
 //---------------------------------------------------------------------------------------------------------------------
@@ -81,6 +81,17 @@ static void sTrace(uBarrierContext *context, const char* text)
 static void sAddString(uBarrierContext *context, const char *string)
 {
 	size_t len = strlen(string);
+	memcpy(context->m_replyCur, string, len);
+	context->m_replyCur += len;
+}
+
+
+
+/**
+@brief Add data to reply packet
+**/
+static void sAddData(uBarrierContext *context, const char *string, size_t len)
+{
 	memcpy(context->m_replyCur, string, len);
 	context->m_replyCur += len;
 }
@@ -197,7 +208,16 @@ static void sSendJoystickCallback(uBarrierContext *context, uint8_t joyNum)
 	context->m_joystickCallback(context->m_cookie, joyNum, context->m_joystickButtons[joyNum], sticks[0], sticks[1], sticks[2], sticks[3]);
 }
 
-
+static int natoi(const char *s, int n)
+{
+    int x = 0;
+    while(isdigit(s[0]) && n--)
+    {
+        x = x * 10 + (s[0] - '0');
+        s++;
+    }
+    return x;
+}
 
 /**
 @brief Parse a single client message, update state, send callbacks and send replies
@@ -245,8 +265,8 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		sAddUInt16(context, context->m_clientWidth);
 		sAddUInt16(context, context->m_clientHeight);
 		sAddUInt16(context, warp);
-		sAddUInt16(context, 0);		// mx?
-		sAddUInt16(context, 0);		// my?
+		sAddUInt16(context, 0);		// current mouse x
+		sAddUInt16(context, 0);		// current mouse y
 		sSendReply(context);
 		return;
 	}
@@ -274,6 +294,13 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		// Call callback
 		if (context->m_screenActiveCallback != 0L)
 			context->m_screenActiveCallback(context->m_cookie, UBARRIER_TRUE);
+
+		/* grab the clipboard ownership */
+		sAddString(context, "CCLP");
+		sAddUInt8(context, 0);
+		sAddUInt32(context, context->m_sequenceNumber);
+		sSendReply(context);
+		context->m_clipboardOwned = UBARRIER_TRUE;
 	}
 	else if (UBARRIER_IS_PACKET("COUT"))
 	{
@@ -395,6 +422,12 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		sSendReply(context);
 		// now reply with CNOP
 	}
+	else if (UBARRIER_IS_PACKET("CCLP"))
+	{
+		/* clipboard has been grabbed */
+		context->m_clipboardOwned = UBARRIER_FALSE;
+		return;
+	}
 	else if (UBARRIER_IS_PACKET("DCLP"))
 	{
 		// Clipboard message
@@ -404,29 +437,93 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		//		1 uint32:	The size of the message
 		//		4 chars: 	The identifier ("DCLP")
 		//		1 uint8: 	The clipboard index
-		//		1 uint32:	The sequence number. It's zero, because this message is always coming from the server?
-		//		1 uint32:	The total size of the remaining 'string' (as per the Barrier %s string format (which is 1 uint32 for size followed by a char buffer (not necessarily null terminated)).
-		//		1 uint32:	The number of formats present in the message
-		// And then 'number of formats' times the following:
-		//		1 uint32:	The format of the clipboard data
-		//		1 uint32:	The size n of the clipboard data
-		//		n uint8:	The clipboard data
-		const uint8_t *	parse_msg	= message+17;
-		uint32_t		num_formats = sNetToNative32(parse_msg);
-		parse_msg += 4;
-		for (; num_formats; num_formats--)
-		{
-			// Parse clipboard format header
-			uint32_t format	= sNetToNative32(parse_msg);
-			uint32_t size	= sNetToNative32(parse_msg+4);
-			parse_msg += 8;
-			
-			// Call callback
-			if (context->m_clipboardCallback)
-				context->m_clipboardCallback(context->m_cookie, format, parse_msg, size);
+		//		1 uint32:	The sequence number. It's zero, because this message is always coming from the server
+		//		1 uint8:	The mark (DataStart / DataChunk / DataEnd = 1/2/3)
+		//		1 uint32:	The current data length
+		//		* chars:	The current data
+		//	If mark == DataStart (1)
+		//		Current data is a string representation of the length of the full clipboard data. Equivalent to the output of printf("%d", encodedclipboardlength)
+		//	ElseIf mark == DataChunk (2)
+		//		Current data is appended to the current buffer
+		//	ElseIf mark == DataEnd (3)
+		//		Indicates the end of data. Length is always 0
+		//		The program should verify that the clipboard length is correct and then set its clipboard.
 
-			parse_msg += size;
+		//	The encoded clipboard data contains:
+		//		1 uint32:	The number of formats present in the clipboard
+		//	For each format:
+		//		1 uint32:	The format of the clipboard data (0 = text)
+		//		1 uint32:	The size of this set of clipboard data
+		//		n uint8:	The data
+
+		uint8_t clipindex = message[8];
+		uint8_t mark = message[13];
+		uint32_t datalen = sNetToNative32(message + 14);
+		if (datalen > UBARRIER_RECEIVE_BUFFER_SIZE) {
+			sTrace(context, "DCLP data length too long. ignoring");
+			return;
 		}
+		const uint8_t *datastart = message + 18;
+
+		/* Only receive clipboard 0 */
+		if (clipindex == 0) {
+			if (mark == 1) {
+				context->m_clipboardRecvState = 1; // Receiving
+				context->m_clipboardRecvLength = natoi(datastart, datalen);
+
+				context->m_clipboardRecvOffset = 0;
+				if (context->m_clipboardRecvLength >= UBARRIER_RECEIVE_CLIPBOARD_SIZE) {
+					sTrace(context, "Clipboard receive length too long. ignoring");
+					context->m_clipboardRecvState = 0; // off
+				}
+			} else if (mark == 2) { // DataChunk
+				if (context->m_clipboardRecvState != 1)
+					sTrace(context, "Clipboard not in receiving state. ignoring data.");
+				else {
+					uint8_t *datatostart = context->m_clipboardRecvBuffer + context->m_clipboardRecvOffset;
+					if (context->m_clipboardRecvOffset + datalen >= UBARRIER_RECEIVE_CLIPBOARD_SIZE)
+						sTrace(context, "Clipboard receive length too long. ignoring");
+					else {
+						memcpy(datatostart, datastart, datalen);
+						context->m_clipboardRecvOffset += datalen;
+					}
+				}
+			} else if (mark == 3) { // DataEnd
+				if (context->m_clipboardRecvState != 1)
+					sTrace(context, "Clipboard not in receiving state. ignoring data.");
+				else if (context->m_clipboardRecvOffset != context->m_clipboardRecvLength)
+					sTrace(context, "Clipboard length invalid. ignoring data.");
+				else {
+					const uint8_t *	parse_msg	= context->m_clipboardRecvBuffer;
+					const uint8_t *bufEnd = context->m_clipboardRecvBuffer + context->m_clipboardRecvOffset;
+					// now parse the output
+					context->m_clipboardRecvState = 0; // off
+					uint32_t num_formats = sNetToNative32(parse_msg);
+					parse_msg += 4;
+
+					for (; num_formats; num_formats--)
+					{
+						if (parse_msg > bufEnd - 8) {
+							sTrace(context, "clipboard overrun while parsing");
+							return;
+						}
+						// Parse clipboard format header
+						uint32_t format	= sNetToNative32(parse_msg);
+						uint32_t size	= sNetToNative32(parse_msg+4);
+						parse_msg += 8;
+						if (parse_msg > bufEnd - size) {
+							sTrace(context, "clipboard overrun while parsing (size)");
+							return;
+						}
+						// Call callback
+						if (context->m_clipboardCallback)
+							context->m_clipboardCallback(context->m_cookie, format, parse_msg, size);
+						parse_msg += size;
+					}
+				}
+			}
+		}
+		return;
 	}
 	else if (UBARRIER_IS_PACKET("CBYE")) 
 	{
@@ -444,7 +541,6 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 	{
 		// Unknown packet, could be any of these
 		//		kMsgCNoop 			= "CNOP"
-		//		kMsgCClipboard 		= "CCLP%1i%4i"
 		//		kMsgCScreenSaver 	= "CSEC%1i"
 		//		kMsgDKeyRepeat		= "DKRP%2i%2i%2i%2i"
 		//		kMsgDKeyRepeat1_0	= "DKRP%2i%2i%2i"
@@ -476,6 +572,10 @@ static void sSetDisconnected(uBarrierContext *context)
 	context->m_isCaptured		= UBARRIER_FALSE;
 	context->m_replyCur			= context->m_replyBuffer + 4;
 	context->m_sequenceNumber	= 0;
+	context->m_clipboardOwned	= UBARRIER_FALSE;
+	context->m_clipboardRecvOffset	= 0;
+	context->m_clipboardRecvLength	= 0;
+	context->m_clipboardRecvState	= 0;
 }
 
 
@@ -610,8 +710,14 @@ void uBarrierUpdate(uBarrierContext *context)
 /**
 @brief Send clipboard data
 **/
-void uBarrierSendClipboard(uBarrierContext *context, const char *text)
+void uBarrierSendClipboard(uBarrierContext *context, const char *text, uint32_t text_length)
 {
+	if (!context->m_clipboardOwned) {
+		sTrace(context, "clipboard not currently owned");
+		return;
+	}
+
+	char intbuffer[15] = {0};
 	// Calculate maximum size that will fit in a reply packet
 	uint32_t overhead_size =	4 +					/* Message size */
 								4 +					/* Message ID */
@@ -621,26 +727,53 @@ void uBarrierSendClipboard(uBarrierContext *context, const char *text)
 								4 +					/* Number of clipboard formats */
 								4 +					/* Clipboard format */
 								4;					/* Clipboard data length */
-	uint32_t max_length = UBARRIER_REPLY_BUFFER_SIZE - overhead_size;
-	
-	// Clip text to max length
-	uint32_t text_length = (uint32_t)strlen(text);
-	if (text_length > max_length)
-	{
-		char buffer[128];
-		sprintf(buffer, "Clipboard buffer too small, clipboard truncated at %d characters", max_length);
-		sTrace(context, buffer);
-		text_length = max_length;
-	}
+	uint32_t max_length_packet = UBARRIER_REPLY_BUFFER_SIZE - overhead_size;
 
-	// Assemble packet
+	/* packet has to be done in segments */
+
+	/* file size has to be done as a literal integer */
+	uint32_t size_len = sprintf(intbuffer, "%d", text_length + 12);
+
+	// Initial packet
 	sAddString(context, "DCLP");
 	sAddUInt8(context, 0);							/* Clipboard index */
 	sAddUInt32(context, context->m_sequenceNumber);
-	sAddUInt32(context, 4+4+4+text_length);			/* Rest of message size: numFormats, format, length, data */
-	sAddUInt32(context, 1);							/* Number of formats (only text for now) */
+	sAddUInt8(context, 1);
+	sAddUInt32(context, size_len);
+	sAddString(context, intbuffer);
+	sSendReply(context);
+
+	/* send initial packet with header */
+	sAddString(context, "DCLP");
+	sAddUInt8(context, 0);							/* Clipboard index */
+	sAddUInt32(context, context->m_sequenceNumber);
+	sAddUInt8(context, 2); /* dataChunk */
+	sAddUInt32(context, 12);
+	sAddUInt32(context, 1); /* number of formats */
 	sAddUInt32(context, UBARRIER_CLIPBOARD_FORMAT_TEXT);
 	sAddUInt32(context, text_length);
-	sAddString(context, text);
+	sSendReply(context);
+	// sAddData(context, &text[curr], dataLen);
+
+	for (uint32_t curr = 0; curr < text_length; curr += max_length_packet) {
+		// Intermediate packet
+		uint32_t dataLen = max_length_packet;
+		if (text_length < curr + dataLen)
+			dataLen = text_length - curr;
+
+		sAddString(context, "DCLP");
+		sAddUInt8(context, 0);							/* Clipboard index */
+		sAddUInt32(context, context->m_sequenceNumber);
+		sAddUInt8(context, 2); /* dataChunk */
+		sAddUInt32(context, dataLen);
+		sAddData(context, &text[curr], dataLen);
+		sSendReply(context);
+	}
+
+	sAddString(context, "DCLP");
+	sAddUInt8(context, 0);							/* Clipboard index */
+	sAddUInt32(context, context->m_sequenceNumber);
+	sAddUInt8(context, 3);
+	sAddUInt32(context, 0);
 	sSendReply(context);
 }

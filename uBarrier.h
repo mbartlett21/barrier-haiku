@@ -101,13 +101,15 @@ enum uBarrierClipboardFormat
 #define				UBARRIER_NUM_JOYSTICKS			4				/* Maximum number of supported joysticks */
 
 #define				UBARRIER_PROTOCOL_MAJOR			1				/* Major protocol version */
-#define				UBARRIER_PROTOCOL_MINOR			4				/* Minor protocol version */
+#define				UBARRIER_PROTOCOL_MINOR			6				/* Minor protocol version */
 
 #define				UBARRIER_IDLE_TIMEOUT			20000			/* Timeout in milliseconds before reconnecting */
 
 #define				UBARRIER_TRACE_BUFFER_SIZE		1024			/* Maximum length of traced message */
 #define				UBARRIER_REPLY_BUFFER_SIZE		1024			/* Maximum size of a reply packet */
 #define				UBARRIER_RECEIVE_BUFFER_SIZE	4096			/* Maximum size of an incoming packet */
+
+#define				UBARRIER_RECEIVE_CLIPBOARD_SIZE	65536			/* Maximum size of incoming clipboard */
 
 
 
@@ -336,10 +338,11 @@ typedef struct
 	uBarrierJoystickCallback		m_joystickCallback;								/* Callback for joystick events */
 	uBarrierClipboardCallback		m_clipboardCallback;							/* Callback for clipboard events */
 
-	/* State data, used internall by client, initialized by uBarrierInit() */
+	/* State data, used internally by client, initialized by uBarrierInit() */
 	uBarrierBool					m_connected;									/* Is our socket connected? */
 	uBarrierBool					m_hasReceivedHello;								/* Have we received a 'Hello' from the server? */
 	uBarrierBool					m_isCaptured;									/* Is Barrier active (i.e. this client is receiving input messages?) */
+	uBarrierBool					m_clipboardOwned;								/* Is clipboard 0 owned */
 	uint32_t						m_lastMessageTime;								/* Time at which last message was received */
 	uint32_t						m_sequenceNumber;								/* Packet sequence number */
 	uint8_t							m_receiveBuffer[UBARRIER_RECEIVE_BUFFER_SIZE];	/* Receive buffer */
@@ -355,6 +358,10 @@ typedef struct
 	uBarrierBool					m_mouseButtonMiddle;							/* Mouse middle button */
 	int8_t							m_joystickSticks[UBARRIER_NUM_JOYSTICKS][4];	/* Joystick stick position in 2 axes for 2 sticks */
 	uint16_t						m_joystickButtons[UBARRIER_NUM_JOYSTICKS];		/* Joystick button state */
+	uint8_t							m_clipboardRecvBuffer[UBARRIER_RECEIVE_CLIPBOARD_SIZE];	/* clipboard receive buffering */
+	int								m_clipboardRecvOffset;
+	uint32_t						m_clipboardRecvLength;
+	uint8_t							m_clipboardRecvState;
 } uBarrierContext;
 
 
@@ -411,7 +418,7 @@ supported with some effort.
 @param context	Context to send clipboard data to
 @param text		Text to set to the clipboard
 **/
-extern void		uBarrierSendClipboard(uBarrierContext *context, const char *text);
+extern void		uBarrierSendClipboard(uBarrierContext *context, const char *text, uint32_t text_length);
 
 
 
