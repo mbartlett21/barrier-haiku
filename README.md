@@ -23,14 +23,16 @@ Simply run ```make``` under Haiku
   server = 192.168.1.101
   server_keymap = "X11"
   server_ssl = true
+  server_fingerprint = "v2:sha256:somebiglonghashstringthatissixtyfourcharacterslongjustlikethisis"
   ```
 ### Options
   * **enable**: Enable the client (true|false)
   * **server**: Server address
   * **server_keymap**: Keymap of the Barrier Server (X11|AT). `AT` for Windows servers.
-  * **server_ssl**: Whether the server uses ssl/tls (true|false).
+  * **server_ssl**: Whether the server uses ssl/tls (true|false). If server_fingerprint is specified, this is forced on.
+  * **server_fingerprint**: The server fingerprint. This can be found under `tls/local-fingerprint` on the server, or in the client's syslog once it has connected.
   * **client_name**: Name of client (string, "haiku" default)
-  
+
 ## Manual Installation
 Copy the barrier_client input add-on to the non-packaged add-ons directory ```~/config/non-packaged/add-ons/input_server/devices/```
 

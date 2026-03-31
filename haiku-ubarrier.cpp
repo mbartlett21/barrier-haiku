@@ -44,6 +44,8 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/x509.h>
+#include <openssl/sha.h>
 
 #include <driver_settings.h>
 #include <keyboard_mouse_driver.h>
@@ -453,9 +455,68 @@ uBarrierInputServerDevice::_UpdateSettings()
 	fServerKeymap = get_driver_parameter(handle, "server_keymap", NULL, NULL);
 	fServerAddress = get_driver_parameter(handle, "server", NULL, NULL);
 	fServerSsl = get_driver_boolean_parameter(handle, "server_ssl", false, false);
+	fServerFingerprint = get_driver_parameter(handle, "server_fingerprint", NULL, NULL);
+	if (fServerFingerprint.Length() > 0)
+		fServerSsl = true;
 	fClientName = get_driver_parameter(handle, "client_name", DEFAULT_NAME, DEFAULT_NAME);
 
 	unload_driver_settings(handle);
+}
+
+
+// Verify the server certificate matches a Barrier v2:sha256:<hex> fingerprint.
+// Returns true if the fingerprint matches or if no expected fingerprint is set.
+static bool
+verify_fingerprint(SSL* ssl, const BString& expected)
+{
+	X509* cert = SSL_get_peer_certificate(ssl);
+	if (cert == NULL) {
+		TRACE("barrier: no certificate presented\n");
+		return false;
+	}
+
+	/* extract as a DER certificate */
+	unsigned char der[16384];
+	unsigned char* derPtr = der;
+	int derLen = i2d_X509(cert, &derPtr);
+	X509_free(cert);
+
+	if (derLen <= 0) {
+		TRACE("barrier: failed to DER-encode certificate\n");
+		return false;
+	}
+
+	/* and then turn it into a hex-encoded SHA256 hash */
+	unsigned char digest[SHA256_DIGEST_LENGTH];
+	SHA256(der, derLen, digest);
+
+	char hexActual[SHA256_DIGEST_LENGTH * 2 + 1];
+	for (int i = 0; i < SHA256_DIGEST_LENGTH; i++)
+		snprintf(hexActual + i * 2, 3, "%02x", digest[i]);
+	hexActual[SHA256_DIGEST_LENGTH * 2] = '\0';
+
+	/* always log it */
+	TRACE("barrier: cert fingerprint:     v2:sha256:%s\n", hexActual);
+
+	if (expected.Length() == 0) {
+		TRACE("barrier: no fingerprint specified: allowing connection\n");
+		return true;
+	}
+
+	/* allow the v2:sha256 prefix so it can be copied from the server simply */
+	BString hexExpected = expected;
+	if (hexExpected.StartsWith("v2:sha256:"))
+		hexExpected.Remove(0, 10);
+
+	TRACE("barrier: expected fingerprint: v2:sha256:%s\n", hexExpected.String());
+
+	if (hexExpected.ICompare(hexActual) != 0) {
+		TRACE("barrier: fingerprint mismatch: rejecting connection\n");
+		return false;
+	}
+
+	TRACE("barrier: fingerprint OK\n");
+	return true;
 }
 
 
@@ -524,7 +585,6 @@ uBarrierInputServerDevice::Connect()
 		goto exit;
 	}
 
-	/* TODO: Check with the user for a specific allowed certificate */
 	SSL_CTX_set_verify(fSSLContext, SSL_VERIFY_NONE, NULL);
 
 	fSSL = SSL_new(fSSLContext);
@@ -547,6 +607,14 @@ uBarrierInputServerDevice::Connect()
 	if ((ret = SSL_connect(fSSL)) != 1) {
 		int err = SSL_get_error(fSSL, ret);
 		TRACE("barrier: SSL_connect failed, error %d\n", err);
+		close(fSocket);
+		fSocket = -1;
+		_CloseSSL();
+		goto exit;
+	}
+
+	if (!verify_fingerprint(fSSL, fServerFingerprint)) {
+		Trace("Failed to verify SSL fingerprint");
 		close(fSocket);
 		fSocket = -1;
 		_CloseSSL();
