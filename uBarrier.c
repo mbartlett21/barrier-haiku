@@ -226,12 +226,12 @@ static int natoi(const char *s, int n)
 static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 {
 	// We have a packet!
-	if (memcmp(message+4, "Barrier", 7)==0)
+	if (memcmp(message+4, "Barrier", 7)==0 || memcmp(message+4, "Synergy", 7)==0)
 	{
 		// Welcome message
 		//		kMsgHello			= "Barrier%2i%2i"
 		//		kMsgHelloBack		= "Barrier%2i%2i%s"
-		sAddString(context, "Barrier");
+		sAddData(context, message + 4, 7);
 		sAddUInt16(context, UBARRIER_PROTOCOL_MAJOR);
 		sAddUInt16(context, UBARRIER_PROTOCOL_MINOR);
 		sAddUInt32(context, (uint32_t)strlen(context->m_clientName));
