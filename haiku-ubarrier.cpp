@@ -430,6 +430,11 @@ uBarrierInputServerDevice::Connect()
 	if (fServerAddress.Length() == 0 || fEnableBarrier == false)
 		goto exit;
 
+	if (fSocket != -1) {
+		close(fSocket);
+		fSocket = -1;
+	}
+
 	struct sockaddr_in server;
 
 	server.sin_family = AF_INET;
