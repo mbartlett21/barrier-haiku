@@ -31,6 +31,8 @@
 #include "Keymap.h"
 #include "uBarrier.h"
 
+#include <cstdio>
+
 
 #define DEFAULT_NAME "haiku"
 
