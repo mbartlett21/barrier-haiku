@@ -107,10 +107,10 @@ enum uBarrierClipboardFormat
 #define				UBARRIER_IDLE_TIMEOUT			20000			/* Timeout in milliseconds before reconnecting */
 
 #define				UBARRIER_TRACE_BUFFER_SIZE		1024			/* Maximum length of traced message */
-#define				UBARRIER_REPLY_BUFFER_SIZE		1024			/* Maximum size of a reply packet */
-#define				UBARRIER_RECEIVE_BUFFER_SIZE	4096			/* Maximum size of an incoming packet */
+#define				UBARRIER_REPLY_BUFFER_SIZE		(16*1024)		/* Maximum size of a reply packet */
+#define				UBARRIER_RECEIVE_BUFFER_SIZE	(1024*1024)		/* Maximum size of an incoming packet */
 
-#define				UBARRIER_RECEIVE_CLIPBOARD_SIZE	65536			/* Maximum size of incoming clipboard */
+#define				UBARRIER_RECEIVE_CLIPBOARD_SIZE	(2*1024*1024)	/* Maximum size of incoming clipboard */
 
 
 
@@ -348,7 +348,7 @@ typedef struct
 	uint32_t						m_lastMessageTime;								/* Time at which last message was received */
 	uint32_t						m_sequenceNumber;								/* Packet sequence number */
 	uint8_t							m_receiveBuffer[UBARRIER_RECEIVE_BUFFER_SIZE];	/* Receive buffer */
-	int								m_receiveOfs;									/* Receive buffer offset */
+	uint32_t						m_receiveOfs;									/* Receive buffer offset */
 	uint8_t							m_replyBuffer[UBARRIER_REPLY_BUFFER_SIZE];		/* Reply buffer */
 	uint8_t*						m_replyCur;										/* Write offset into reply buffer */
 	uint16_t						m_mouseX;										/* Mouse X position */
@@ -361,7 +361,7 @@ typedef struct
 	int8_t							m_joystickSticks[UBARRIER_NUM_JOYSTICKS][4];	/* Joystick stick position in 2 axes for 2 sticks */
 	uint16_t						m_joystickButtons[UBARRIER_NUM_JOYSTICKS];		/* Joystick button state */
 	uint8_t							m_clipboardRecvBuffer[UBARRIER_RECEIVE_CLIPBOARD_SIZE];	/* clipboard receive buffering */
-	int								m_clipboardRecvOffset;
+	uint32_t						m_clipboardRecvOffset;
 	uint32_t						m_clipboardRecvLength;
 	uint8_t							m_clipboardRecvState;
 } uBarrierContext;
