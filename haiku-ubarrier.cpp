@@ -551,7 +551,7 @@ uBarrierInputServerDevice::Connect()
 	}
 
 	struct timeval timeout;
-	timeout.tv_sec = 60;
+	timeout.tv_sec = 15;
 	timeout.tv_usec = 0;
 
 	/* timeout change errors aren't fatal */
