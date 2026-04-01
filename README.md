@@ -4,20 +4,27 @@
 
 Barrier for Haiku is a [Barrier](https://github.com/debauchee/barrier) client for the [Haiku Operating System](http://haiku-os.org).
 
+It also supports [Deskflow](https://github.com/deskflow/deskflow) and should also work with [Synergy](https://symless.com/synergy)
+
 Barrier allows a central machine running the Barrier server to share its Keyboard and Mouse across multiple systems running the client as if they were one desktop.
 
 ## Limitations
-  - Barrier for Haiku is only a Barrier client at this time
+
+  - Barrier for Haiku is only a Barrier client, not a server
   - Some minor bugs still exist in the keymap translation
-  - For now, client name is always "haiku"
-  - SSL / TLS is not currently supported and must be disabled on the server
+  - SSL / TLS configuration needs to set up in the configuration file and will not be automatically detected
+  - Requiring client certificates is not currently supported and must be disabled on the server
 
 ## Compiling
-Simply run ```make``` under Haiku
+
+Simply run `make ; make install` under Haiku.
+
+For updating, you *must* do a `make uninstall` before `make install`, otherwise you will visit the kernel debugger.
 
 ## Configuration
-  Create a configuration file at ```~/config/settings/barrier```
-  
+
+Create a configuration file at `~/config/settings/barrier`
+
   ```ini
   enable = true
   server = 192.168.1.101
@@ -25,7 +32,9 @@ Simply run ```make``` under Haiku
   server_ssl = true
   server_fingerprint = "v2:sha256:somebiglonghashstringthatissixtyfourcharacterslongjustlikethisis"
   ```
+
 ### Options
+
   * **enable**: Enable the client (true|false)
   * **server**: Server address
   * **server_keymap**: Keymap of the Barrier Server (X11|AT). `AT` for Windows servers.
@@ -34,7 +43,8 @@ Simply run ```make``` under Haiku
   * **client_name**: Name of client (string, "haiku" default)
 
 ## Manual Installation
-Copy the barrier_client input add-on to the non-packaged add-ons directory ```~/config/non-packaged/add-ons/input_server/devices/```
+
+Copy the generated `barrier_client` input add-on to the non-packaged add-ons directory: `~/config/non-packaged/add-ons/input_server/devices/`
 
 ## License
 
