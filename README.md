@@ -14,6 +14,7 @@ Barrier allows a central machine running the Barrier server to share its Keyboar
   - Some minor bugs still exist in the keymap translation
   - SSL / TLS configuration needs to set up in the configuration file and will not be automatically detected
   - Requiring client certificates is not currently supported and must be disabled on the server
+  - Clipboard support only supports plaintext both ways
 
 ## Compiling
 
