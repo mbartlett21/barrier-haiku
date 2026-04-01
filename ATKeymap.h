@@ -13,7 +13,7 @@
 #include <SupportDefs.h>
 
 
-const static uint32 kATKeycodeMap[] = {
+const static uint32 kATKeycodeMap[] = { // 0x00
 	0x1,	// Esc
 	0x12, 	// 1
 	0x13,	// 2
@@ -29,7 +29,7 @@ const static uint32 kATKeycodeMap[] = {
 	0x1d,	// =
 	0x1e,	// Backspace
 	0x26,	// Tab
-	0x27,	// Q
+	0x27,	// Q				0x10
 	0x28,	// W
 	0x29,	// E
 	0x2a,	// R
@@ -45,7 +45,7 @@ const static uint32 kATKeycodeMap[] = {
 	0x5c,	// Left Control
 	0x3c,	// A
 	0x3d,	// S
-	0x3e,	// D
+	0x3e,	// D				0x20
 	0x3f,	// F
 	0x40,	// G
 	0x41,	// H
@@ -61,7 +61,7 @@ const static uint32 kATKeycodeMap[] = {
 	0x4d,	// X
 	0x4e,	// C
 	0x4f,	// V
-	0x50,	// B
+	0x50,	// B				0x30
 	0x51,	// N
 	0x52,	// M
 	0x53,	// ,
@@ -77,13 +77,13 @@ const static uint32 kATKeycodeMap[] = {
 	0x04,	// F3
 	0x05,	// F4
 	0x06,	// F5
-	0x07,	// F6
+	0x07,	// F6				0x40
 	0x08,	// F7
 	0x09,	// F8
 	0x0a,	// F9
 	0x0b,	// F10
 	0x22,	// Number Lock
-	0x0f,	// Scroll
+	0x0f,	// Scroll Lock
 	0x37,	// KP 7
 	0x38,	// KP 8
 	0x39,	// KP 9
@@ -93,7 +93,7 @@ const static uint32 kATKeycodeMap[] = {
 	0x4a,	// KP 6
 	0x3a,	// KP +
 	0x58,	// KP 1
-	0x59,	// KP 2
+	0x59,	// KP 2				0x50
 	0x5a,	// KP 3
 	0x64,	// KP 0
 	0x65,	// KP .
@@ -109,7 +109,7 @@ const static uint32 kATKeycodeMap[] = {
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
-	0x00,	// UNMAPPED
+	0x00,	// UNMAPPED			0x60
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
@@ -125,7 +125,7 @@ const static uint32 kATKeycodeMap[] = {
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED		110
 	0x00,	// UNMAPPED
-	0x6e,	// Katakana/Hiragana, second key right to spacebar, japanese
+	0x6e,	// Katakana/Hiragana, second key right to spacebar, japanese	0x70
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x6b,	// Ro (\\ key, japanese)
@@ -141,7 +141,7 @@ const static uint32 kATKeycodeMap[] = {
 	0x6a,	// Yen (macron key, japanese)
 	0x70,	// Keypad . on Brazilian ABNT2
 	0x00,	// UNMAPPED
-	0x00,	// UNMAPPED
+	0x00,	// UNMAPPED			0x80
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED		130
 	0x00,	// UNMAPPED
@@ -157,7 +157,7 @@ const static uint32 kATKeycodeMap[] = {
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
-	0x00,	// UNMAPPED
+	0x00,	// UNMAPPED			0x90
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
@@ -173,7 +173,7 @@ const static uint32 kATKeycodeMap[] = {
 	0x60,	// Right Control
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
-	0x00,	// UNMAPPED		160
+	0x00,	// UNMAPPED		160	0xa0
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
@@ -189,7 +189,7 @@ const static uint32 kATKeycodeMap[] = {
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
-	0x00,	// UNMAPPED
+	0x00,	// UNMAPPED			0xb0
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
@@ -205,7 +205,7 @@ const static uint32 kATKeycodeMap[] = {
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED		190
 	0x00,	// UNMAPPED
-	0x00,	// UNMAPPED
+	0x00,	// UNMAPPED			0xc0
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
@@ -221,9 +221,9 @@ const static uint32 kATKeycodeMap[] = {
 	0x63,	// Right Arrow
 	0x00,	// UNMAPPED
 	0x35,	// End
-	0x62,	// Down Arrow
+	0x62,	// Down Arrow		0xd0
 	0x36,	// Page Down
-	0x1f,	// Insert		200
+	0x1f,	// Insert		210
 	0x34,	// Delete
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
@@ -233,17 +233,17 @@ const static uint32 kATKeycodeMap[] = {
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x66,	// Left Gui
-	0x67,	// Right Gui	210
+	0x67,	// Right Gui	220
 	0x68,	// Menu
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
+	0x00,	// UNMAPPED			0xe0
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
-	0x00,	// UNMAPPED		220
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
 	0x00,	// UNMAPPED
@@ -308,7 +308,7 @@ const static uint32 kATKeycodeMap[] = {
 
 // XXX: This is a dirty hack.
 //      See https://github.com/deskflow/deskflow/issues/4640
-const static uint32 kXKeycodeMap[] = {
+const static uint32 kXKeycodeMap[] = { // values are offset by 8 compared
 	0x0,	// unused
 	0x0,	// unused
 	0x0,	// unused
@@ -316,7 +316,7 @@ const static uint32 kXKeycodeMap[] = {
 	0x0,	// unused
 	0x0,	// unused
 	0x0,	// unused
-	0x0,	// unused
+	0x0,	// unused			0x08
 	0x1,	// Esc
 	0x12,	// 1
 	0x13,	// 2
@@ -332,7 +332,7 @@ const static uint32 kXKeycodeMap[] = {
 	0x1d,	// =
 	0x1e,	// Backspace
 	0x26,	// Tab
-	0x27,	// Q
+	0x27,	// Q				0x18
 	0x28,	// W
 	0x29,	// E
 	0x2a,	// R
@@ -348,7 +348,7 @@ const static uint32 kXKeycodeMap[] = {
 	0x5c,	// Left Control
 	0x3c,	// A
 	0x3d,	// S
-	0x3e,	// D
+	0x3e,	// D				0x28
 	0x3f,	// F
 	0x40,	// G
 	0x41,	// H
@@ -364,7 +364,7 @@ const static uint32 kXKeycodeMap[] = {
 	0x4d,	// X
 	0x4e,	// C
 	0x4f,	// V
-	0x50,	// B
+	0x50,	// B				0x38
 	0x51,	// N
 	0x52,	// M
 	0x53,	// ,
@@ -380,13 +380,13 @@ const static uint32 kXKeycodeMap[] = {
 	0x04,	// F3
 	0x05,	// F4
 	0x06,	// F5
-	0x07,	// F6
+	0x07,	// F6				0x48
 	0x08,	// F7
 	0x09,	// F8
 	0x0a,	// F9
 	0x0b,	// F10
 	0x22,	// Number Lock
-	0x0f,	// Scroll
+	0x0f,	// Scroll Lock
 	0x37,	// KP 7
 	0x38,	// KP 8
 	0x39,	// KP 9
@@ -396,7 +396,7 @@ const static uint32 kXKeycodeMap[] = {
 	0x4a,	// KP 6
 	0x3a,	// KP +
 	0x58,	// KP 1
-	0x59,	// KP 2
+	0x59,	// KP 2				0x58
 	0x5a,	// KP 3
 	0x64,	// KP 0
 	0x65,	// KP .
@@ -412,7 +412,7 @@ const static uint32 kXKeycodeMap[] = {
 	0x00,	// unused
 	0x00,	// unused
 	0x5b,	// KP Enter
-	0x60,	// Right Control
+	0x60,	// Right Control	0x68
 	0x23,	// KP /
 	0x0e,	// Print Screen
 	0x5f,	// Right Alt
@@ -428,7 +428,7 @@ const static uint32 kXKeycodeMap[] = {
 	0x1f,	// Insert
 	0x34,	// Delete
 	0x00,	// unused
-	0x00,	// XF86AudioMute
+	0x00,	// XF86AudioMute	0x78
 	0x00,	// XF86AudioLowerVolume
 	0x00,	// XF86AudioRaiseVolume
 	0x00,	// XF86PowerOff
