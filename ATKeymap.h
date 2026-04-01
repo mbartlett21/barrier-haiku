@@ -27,8 +27,8 @@ const static uint32 kATKeycodeMap[] = {
 	0x1b,	// 0
 	0x1c,	// -
 	0x1d,	// =
-	0x1e,	// BACKSPACE
-	0x26,	// TAB
+	0x1e,	// Backspace
+	0x26,	// Tab
 	0x27,	// Q
 	0x28,	// W
 	0x29,	// E
@@ -41,7 +41,7 @@ const static uint32 kATKeycodeMap[] = {
 	0x30,	// P
 	0x31,	// [
 	0x32,	// ]
-	0x47,	// ENTER
+	0x47,	// Enter
 	0x5c,	// Left Control
 	0x3c,	// A
 	0x3d,	// S
@@ -68,7 +68,7 @@ const static uint32 kATKeycodeMap[] = {
 	0x54,	// .
 	0x55,	// /
 	0x56,	// Right Shift
-	0x24,	// *
+	0x24,	// KP *
 	0x5d,	// Left Alt
 	0x5e,	// Space
 	0x3b,	// Caps
@@ -82,7 +82,7 @@ const static uint32 kATKeycodeMap[] = {
 	0x09,	// F8
 	0x0a,	// F9
 	0x0b,	// F10
-	0x22,	// Num
+	0x22,	// Number Lock
 	0x0f,	// Scroll
 	0x37,	// KP 7
 	0x38,	// KP 8
@@ -307,7 +307,7 @@ const static uint32 kATKeycodeMap[] = {
 };
 
 // XXX: This is a dirty hack.
-//      See https://github.com/synergy/synergy/issues/4640
+//      See https://github.com/deskflow/deskflow/issues/4640
 const static uint32 kXKeycodeMap[] = {
 	0x0,	// unused
 	0x0,	// unused
@@ -317,7 +317,7 @@ const static uint32 kXKeycodeMap[] = {
 	0x0,	// unused
 	0x0,	// unused
 	0x0,	// unused
-	0x1,	// ESC
+	0x1,	// Esc
 	0x12,	// 1
 	0x13,	// 2
 	0x14,	// 3
@@ -330,8 +330,8 @@ const static uint32 kXKeycodeMap[] = {
 	0x1b,	// 0
 	0x1c,	// -
 	0x1d,	// =
-	0x1e,	// <bck>
-	0x26,	// <tab>
+	0x1e,	// Backspace
+	0x26,	// Tab
 	0x27,	// Q
 	0x28,	// W
 	0x29,	// E
@@ -344,8 +344,8 @@ const static uint32 kXKeycodeMap[] = {
 	0x30,	// P
 	0x31,	// [
 	0x32,	// ]
-	0x47,	// <ent>
-	0x5c,	// <lctl>
+	0x47,	// Enter
+	0x5c,	// Left Control
 	0x3c,	// A
 	0x3d,	// S
 	0x3e,	// D
@@ -371,7 +371,7 @@ const static uint32 kXKeycodeMap[] = {
 	0x54,	// .
 	0x55,	// /
 	0x56,	// Right Shift
-	0x24,	// *
+	0x24,	// KP *
 	0x5d,	// Left Alt
 	0x5e,	// Space
 	0x3b,	// Caps
@@ -385,7 +385,7 @@ const static uint32 kXKeycodeMap[] = {
 	0x09,	// F8
 	0x0a,	// F9
 	0x0b,	// F10
-	0x22,	// Num
+	0x22,	// Number Lock
 	0x0f,	// Scroll
 	0x37,	// KP 7
 	0x38,	// KP 8
@@ -400,7 +400,7 @@ const static uint32 kXKeycodeMap[] = {
 	0x5a,	// KP 3
 	0x64,	// KP 0
 	0x65,	// KP .
-	0x00,	// unused
+	0x00,	// unused (ISO_Level3_Shift)
 	0x00,	// unused
 	0x69,	// <
 	0x0c,	// F11
@@ -412,21 +412,37 @@ const static uint32 kXKeycodeMap[] = {
 	0x00,	// unused
 	0x00,	// unused
 	0x5b,	// KP Enter
-	0x60,	// Left Control
-	0x23,	// KP Div
-	0x0e,	// Print
+	0x60,	// Right Control
+	0x23,	// KP /
+	0x0e,	// Print Screen
 	0x5f,	// Right Alt
 	0x00,	// unused
 	0x20,	// Home
-	0x57,	// Up
-	0x21,	// Pg Up
-	0x61,	// Left
-	0x63,	// Right
+	0x57,	// Up Arrow
+	0x21,	// Page Up (Prior)
+	0x61,	// Left Arrow
+	0x63,	// Right Arrow
 	0x35,	// End
-	0x62,	// Down
-	0x36,	// Page Down
+	0x62,	// Down Arrow
+	0x36,	// Page Down (Next)
 	0x1f,	// Insert
 	0x34,	// Delete
+	0x00,	// unused
+	0x00,	// XF86AudioMute
+	0x00,	// XF86AudioLowerVolume
+	0x00,	// XF86AudioRaiseVolume
+	0x00,	// XF86PowerOff
+	0x00,	// KP =
+	0x00,	// +-
+	0x00,	// Pause/Break
+	0x00,	// XF86LaunchA
+	0x00,	// KP . (?)
+	0x00,	// unused
+	0x00,	// unused
+	0x00,	// unused
+	0x66,	// Left Gui
+	0x67,	// Right Gui
+	0x68,	// Menu
 };
 
 
