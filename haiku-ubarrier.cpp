@@ -56,6 +56,7 @@
 
 #include "haiku-ubarrier.h"
 
+// #define TRACE_BARRIER_KEYCODES_AND_MOVES
 
 #define TRACE_BARRIER_DEVICE
 #ifdef TRACE_BARRIER_DEVICE
@@ -827,7 +828,9 @@ uBarrierInputServerDevice::KeyboardCallback(uint16_t scancode,
 		}
 	}
 
+#ifdef TRACE_BARRIER_KEYCODES_AND_MOVES
 	TRACE("barrier: scancode = 0x%02x, keycode = 0x%x\n", scancode, keycode);
+#endif
 
 	if (keycode < 256) {
 		if (isKeyDown)
@@ -873,16 +876,20 @@ uBarrierInputServerDevice::KeyboardCallback(uint16_t scancode,
 			if (message == NULL)
 				return;
 
+#ifdef TRACE_BARRIER_KEYCODES_AND_MOVES
 			TRACE("barrier: modifiers: 0x%04" B_PRIx32 " & 0x%04" B_PRIx32 "\n",
 				modifiers, fModifiers);
+#endif
 
 			if (isKeyDown)
 				modifiers |= fModifiers;
 			else
 				modifiers &= ~fModifiers;
 
+#ifdef TRACE_BARRIER_KEYCODES_AND_MOVES
 			TRACE("barrier: modifiers changed: 0x%04" B_PRIx32 " => 0x%04"
 				B_PRIx32 "\n", fModifiers, modifiers);
+#endif
 
 			message->AddInt64("when", timestamp);
 			message->AddInt32("be:old_modifiers", fModifiers);
@@ -920,10 +927,14 @@ uBarrierInputServerDevice::KeyboardCallback(uint16_t scancode,
 	msg->AddData("states", B_UINT8_TYPE, states, 16);
 	if (numBytes > 0) {
 		for (int i = 0; i < numBytes; i++) {
+#ifdef TRACE_BARRIER_KEYCODES_AND_MOVES
 			TRACE("%02x:", (int8)string[i]);
+#endif
 			msg->AddInt8("byte", (int8)string[i]);
 		}
+#ifdef TRACE_BARRIER_KEYCODES_AND_MOVES
 		TRACE("\n");
+#endif
 		msg->AddData("bytes", B_STRING_TYPE, string, numBytes + 1);
 
 		if (rawNumBytes <= 0) {
