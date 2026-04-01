@@ -32,6 +32,8 @@ Create a configuration file at `~/config/settings/barrier`
   server_keymap = "X11"
   server_ssl = true
   server_fingerprint = "v2:sha256:somebiglonghashstringthatissixtyfourcharacterslongjustlikethisis"
+  client_name = "bob"
+  client_swap_ctrl_alt = false
   ```
 
 ### Options
@@ -42,6 +44,7 @@ Create a configuration file at `~/config/settings/barrier`
   * **server_ssl**: Whether the server uses ssl/tls (true|false). If server_fingerprint is specified, this is forced on.
   * **server_fingerprint**: The server fingerprint. This can be found under `tls/local-fingerprint` on the server, or in the client's syslog once it has connected.
   * **client_name**: Name of client (string, "haiku" default)
+  * **client_swap_ctrl_alt**: Swap received Ctrl and Alt keys.
 
 ## Manual Installation
 

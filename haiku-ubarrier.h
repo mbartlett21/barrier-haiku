@@ -102,6 +102,8 @@ class uBarrierInputServerDevice : public BHandler, public BInputServerDevice {
 		bool				fServerSsl;
 		BString				fServerFingerprint;
 		BString				fClientName;
+		bool				fClientSwapCtrlAlt;
+
 		bool				fJustChangedClipboard;
 
 	volatile bool			fUpdateSettings;

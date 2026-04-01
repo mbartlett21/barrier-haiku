@@ -190,7 +190,10 @@ uBarrierInputServerDevice::uBarrierInputServerDevice()
 	fEnableBarrier(false),
 	fServerAddress(NULL),
 	fServerKeymap(NULL),
+	fServerSsl(false),
+	fServerFingerprint(NULL),
 	fClientName(DEFAULT_NAME),
+	fClientSwapCtrlAlt(false),
 	fUpdateSettings(false),
 	fKeymapLock("barrier keymap lock"),
 	fJustChangedClipboard(false)
@@ -454,13 +457,14 @@ uBarrierInputServerDevice::_UpdateSettings()
 		return;
 
 	fEnableBarrier = get_driver_boolean_parameter(handle, "enable", false, false);
-	fServerKeymap = get_driver_parameter(handle, "server_keymap", NULL, NULL);
 	fServerAddress = get_driver_parameter(handle, "server", NULL, NULL);
+	fServerKeymap = get_driver_parameter(handle, "server_keymap", NULL, NULL);
 	fServerSsl = get_driver_boolean_parameter(handle, "server_ssl", false, false);
 	fServerFingerprint = get_driver_parameter(handle, "server_fingerprint", NULL, NULL);
 	if (fServerFingerprint.Length() > 0)
 		fServerSsl = true;
 	fClientName = get_driver_parameter(handle, "client_name", DEFAULT_NAME, DEFAULT_NAME);
+	fClientSwapCtrlAlt = get_driver_boolean_parameter(handle, "client_swap_ctrl_alt", false, false);
 
 	unload_driver_settings(handle);
 }
@@ -828,6 +832,18 @@ uBarrierInputServerDevice::KeyboardCallback(uint16_t scancode,
 		}
 	}
 
+	if (fClientSwapCtrlAlt) {
+		switch (keycode) {
+		case 0x5c: keycode = 0x5d; break;
+		case 0x5d: keycode = 0x5c; break;
+		case 0x60: keycode = 0x5f; break;
+		case 0x5f: keycode = 0x60; break;
+		}
+		/* and also switch modifiers */
+		bool has_ctrl = (_modifiers & UBARRIER_MODIFIER_CTRL) != 0;
+		bool has_alt = (_modifiers & UBARRIER_MODIFIER_ALT) != 0;
+	}
+
 #ifdef TRACE_BARRIER_KEYCODES_AND_MOVES
 	TRACE("barrier: scancode = 0x%02x, keycode = 0x%x\n", scancode, keycode);
 #endif
@@ -852,9 +868,9 @@ uBarrierInputServerDevice::KeyboardCallback(uint16_t scancode,
 	if (_modifiers & UBARRIER_MODIFIER_SHIFT)
 		modifiers |= B_SHIFT_KEY | B_LEFT_SHIFT_KEY;
 	if (_modifiers & UBARRIER_MODIFIER_CTRL)
-		modifiers |= B_CONTROL_KEY | B_LEFT_CONTROL_KEY;
+		modifiers |= fClientSwapCtrlAlt ? (B_COMMAND_KEY | B_LEFT_COMMAND_KEY) : (B_CONTROL_KEY | B_LEFT_CONTROL_KEY);
 	if (_modifiers & UBARRIER_MODIFIER_ALT)
-		modifiers |= B_COMMAND_KEY | B_LEFT_COMMAND_KEY;
+		modifiers |= fClientSwapCtrlAlt ? (B_CONTROL_KEY | B_LEFT_CONTROL_KEY) : (B_COMMAND_KEY | B_LEFT_COMMAND_KEY);
 	if (_modifiers & UBARRIER_MODIFIER_META)
 		modifiers |= B_MENU_KEY;
 	if (_modifiers & UBARRIER_MODIFIER_WIN)
