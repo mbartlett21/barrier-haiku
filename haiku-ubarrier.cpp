@@ -3,6 +3,7 @@
  *      2014      Ed Robbins <edd.robbins@gmail.com>
  *      2014      Jessica Hamilton <jessica.l.hamilton@gmail.com>
  *      2015-2016 Alexander von Gluck IV <kallisti5@unixzen.com>
+ *      2026      Morgan Bartlett <mjmouse9999@gmail.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

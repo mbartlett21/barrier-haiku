@@ -1,8 +1,9 @@
 /*
 uBarrier client -- Implementation for the embedded Barrier client library
-    version 1.0.0, July 7th, 2012
+    version 1.0.0, July 7th, 2012 (modified)
 
 Copyright (c) 2012 Alex Evans
+Copyright (c) 2026 Morgan Bartlett
 
 This software is provided 'as-is', without any express or implied
 warranty. In no event will the authors be held liable for any damages
