@@ -325,6 +325,7 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		else
 			context->m_mouseButtonLeft		= UBARRIER_TRUE;
 		sSendMouseCallback(context);
+		return;
 	}
 	else if (UBARRIER_IS_PACKET("DMUP"))
 	{
@@ -338,6 +339,7 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		else
 			context->m_mouseButtonLeft		= UBARRIER_FALSE;
 		sSendMouseCallback(context);
+		return;
 	}
 	else if (UBARRIER_IS_PACKET("DMMV"))
 	{
@@ -346,6 +348,7 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		context->m_mouseX = sNetToNative16(message+8);
 		context->m_mouseY = sNetToNative16(message+10);
 		sSendMouseCallback(context);
+		return;
 	}
 	else if (UBARRIER_IS_PACKET("DMWM"))
 	{
@@ -355,6 +358,7 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		context->m_mouseWheelX += sNetToNative16(message+8);
 		context->m_mouseWheelY += sNetToNative16(message+10);
 		sSendMouseCallback(context);
+		return;
 	}
 	else if (UBARRIER_IS_PACKET("DKDN"))
 	{
@@ -365,6 +369,7 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		uint16_t mod = sNetToNative16(message+10);
 		uint16_t key = sNetToNative16(message+12);
 		sSendKeyboardCallback(context, key, mod, id, UBARRIER_TRUE, UBARRIER_FALSE);
+		return;
 	}
 	else if (UBARRIER_IS_PACKET("DKRP"))
 	{
@@ -376,6 +381,7 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 //		uint16_t count = sNetToNative16(message+12);
 		uint16_t key = sNetToNative16(message+14);
 		sSendKeyboardCallback(context, key, mod, id, UBARRIER_TRUE, UBARRIER_TRUE);
+		return;
 	}
 	else if (UBARRIER_IS_PACKET("DKUP"))
 	{
@@ -387,6 +393,7 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		uint16_t mod = sNetToNative16(message+10);
 		uint16_t key = sNetToNative16(message+12);
 		sSendKeyboardCallback(context, key, mod, id, UBARRIER_FALSE, UBARRIER_FALSE);
+		return;
 	}
 	else if (UBARRIER_IS_PACKET("DGBT"))
 	{
@@ -399,6 +406,7 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 			context->m_joystickButtons[joy_num] = (message[9] << 8) | message[10];
 			sSendJoystickCallback(context, joy_num);
 		}
+		return;
 	}
 	else if (UBARRIER_IS_PACKET("DGST"))
 	{
@@ -411,6 +419,7 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 			memcpy(context->m_joystickSticks[joy_num], message+9, 4);
 			sSendJoystickCallback(context, joy_num);
 		}
+		return;
 	}
 	else if (UBARRIER_IS_PACKET("DSOP"))
 	{
