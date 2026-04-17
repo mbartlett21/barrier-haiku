@@ -464,6 +464,7 @@ uBarrierInputServerDevice::_UpdateSettings()
 	if (fServerFingerprint.Length() > 0)
 		fServerSsl = true;
 	fClientName = get_driver_parameter(handle, "client_name", DEFAULT_NAME, DEFAULT_NAME);
+	fContext->m_clientName = fClientName;
 	fClientSwapCtrlAlt = get_driver_boolean_parameter(handle, "client_swap_ctrl_alt", false, false);
 
 	unload_driver_settings(handle);
