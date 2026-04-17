@@ -462,11 +462,11 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 		uint8_t clipindex = message[8];
 		uint8_t mark = message[13];
 		uint32_t datalen = sNetToNative32(message + 14);
+		const uint8_t *datastart = message + 18;
 		if (datalen > UBARRIER_RECEIVE_BUFFER_SIZE) {
 			sTrace(context, "DCLP data length too long. ignoring");
 			return;
 		}
-		const uint8_t *datastart = message + 18;
 
 		/* Only receive clipboard 0 */
 		if (clipindex == 0) {
@@ -499,20 +499,21 @@ static void sProcessMessage(uBarrierContext *context, const uint8_t *message)
 				else {
 					const uint8_t *	parse_msg	= context->m_clipboardRecvBuffer;
 					const uint8_t *bufEnd = context->m_clipboardRecvBuffer + context->m_clipboardRecvOffset;
+					uint32_t num_formats = sNetToNative32(parse_msg);
 					// now parse the output
 					context->m_clipboardRecvState = 0; // off
-					uint32_t num_formats = sNetToNative32(parse_msg);
 					parse_msg += 4;
 
 					for (; num_formats; num_formats--)
 					{
+						uint32_t format, size;
 						if (parse_msg > bufEnd - 8) {
 							sTrace(context, "clipboard overrun while parsing");
 							return;
 						}
 						// Parse clipboard format header
-						uint32_t format	= sNetToNative32(parse_msg);
-						uint32_t size	= sNetToNative32(parse_msg+4);
+						format	= sNetToNative32(parse_msg);
+						size	= sNetToNative32(parse_msg+4);
 						parse_msg += 8;
 						if (parse_msg > bufEnd - size) {
 							sTrace(context, "clipboard overrun while parsing (size)");
@@ -728,11 +729,6 @@ void uBarrierUpdate(uBarrierContext *context)
 **/
 void uBarrierSendClipboard(uBarrierContext *context, const char *text, uint32_t text_length)
 {
-	if (!context->m_clipboardOwned) {
-		sTrace(context, "clipboard not currently owned");
-		return;
-	}
-
 	char intbuffer[15] = {0};
 	// Calculate maximum size that will fit in a reply packet
 	uint32_t overhead_size =	4 +					/* Message size */
@@ -744,12 +740,16 @@ void uBarrierSendClipboard(uBarrierContext *context, const char *text, uint32_t 
 								4 +					/* Clipboard format */
 								4;					/* Clipboard data length */
 	uint32_t max_length_packet = UBARRIER_REPLY_BUFFER_SIZE - overhead_size;
+	uint32_t curr;
 
 	/* packet has to be done in segments */
 
 	/* file size has to be done as a literal integer */
 	uint32_t size_len = sprintf(intbuffer, "%d", text_length + 12);
-
+	if (!context->m_clipboardOwned) {
+		sTrace(context, "clipboard not currently owned");
+		return;
+	}
 	// Initial packet
 	sAddString(context, "DCLP");
 	sAddUInt8(context, 0);							/* Clipboard index */
@@ -771,7 +771,7 @@ void uBarrierSendClipboard(uBarrierContext *context, const char *text, uint32_t 
 	sSendReply(context);
 	// sAddData(context, &text[curr], dataLen);
 
-	for (uint32_t curr = 0; curr < text_length; curr += max_length_packet) {
+	for (curr = 0; curr < text_length; curr += max_length_packet) {
 		// Intermediate packet
 		uint32_t dataLen = max_length_packet;
 		if (text_length < curr + dataLen)
